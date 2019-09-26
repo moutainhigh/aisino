@@ -1,0 +1,37 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE sqlMap PUBLIC "-//iBATIS.com//DTD SQL Map 2.0//EN" "http://www.ibatis.com/dtd/sql-map-2.dtd">
+<sqlMap>
+	
+	
+	<insert id="insertKbfpmb" parameterClass="map">
+		insert dm_dymb(code,xzsj,swjg_dm,yxbz,pyfileurl,name,twmleft,twmright,qzleft,qztop,qzright,qzbottom,qzpageindex,mxmaxleng) values (#code#,now(),#swjgdm#,'1', #picurl#,#code#,#twmleft#,#twmright#,#qzleft#,#qztop#,#qzright#,#qzbottom#,#qzpageindex#,#mxmaxleng#)
+	</insert>
+	<delete id="deletefpmbxx" parameterClass="String">
+		delete from dm_dymb where swjg_dm=#swjg#
+	</delete>
+	<select id="getYxbz" parameterClass="map" resultClass="String">
+		select yxbz from t_sjcxx where ywbz=#ywbz#
+	</select>
+	<update id="updateYxbz" parameterClass="map">
+		update t_sjcxx set yxbz=#yxbz# where ywbz=#ywbz#
+	</update>
+	<insert id="insertSjcxx" parameterClass="map">
+		insert t_sjcxx(yxbz,sjc,ywbz) values(#yxbz#,#sjc#,#ywbz#)
+	</insert>
+	<update id="updateDzsj" parameterClass="map">
+		update fp_kj set sfcz=#sfcz# where fp_dm=#fp_dm# and fp_hm=#fp_hm#
+	</update>
+	<insert id="insertDzlsh" parameterClass="map">
+		insert dzls(dzlsh,sjg) values (#dzlsh#, #sjg#)
+	</insert>
+	<update id="updateDzlsh" parameterClass="map">
+		update dzls set sjg=#sjg# where dzlsh=#dzlsh#
+	</update>
+	<select id="getDzjg" parameterClass="map" resultClass="String">
+		select dzlsh from dzls where sjg='0'
+	</select>
+	<select id="queryRouts" resultClass="route">
+		SELECT r.url,r.swjg_dm AS swjgDm FROM t_route r
+	</select>
+	
+</sqlMap>

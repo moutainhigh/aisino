@@ -1,0 +1,3 @@
+client:9000
+heartbeat:9001
+console:9002

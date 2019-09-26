@@ -1,0 +1,27 @@
+﻿<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE sqlMap PUBLIC "-//iBATIS.com//DTD SQL Map 2.0//EN" "http://www.ibatis.com/dtd/sql-map-2.dtd">
+<sqlMap>
+	<insert id="insertSyncRequestLog" parameterClass="com.aisino.domain.einvoice.model.SyncRequestLog">
+		INSERT INTO sync_request_log(ID,REQUEST_TYPE,REQUEST_TIME,REQUEST_STATUS,ROUTE_ID)
+		VALUES
+		(#id#,#type#,#time#,#status#,#routeId#)
+	</insert>
+	<select id="querySyncRequestLogLimit" parameterClass="int" resultClass="com.aisino.domain.einvoice.model.SyncRequestLog">
+		SELECT 
+			ID id,REQUEST_TYPE type,REQUEST_TIME time,REQUEST_STATUS status,ROUTE_ID routeId 
+		from sync_request_log 
+		where REQUEST_STATUS='1000' order by REQUEST_TIME limit #value#
+	</select>
+	<select id="checkSyncRequestExist" parameterClass="string" resultClass="int">
+		select count(1) from sync_request_log where ID=#value#
+	</select>
+	
+	<select id="getSyncRequestCount" resultClass="int">
+		select count(1) from sync_request_log where REQUEST_STATUS='1000'
+	</select>
+	
+	<update id="updateSyncRequestStatus" parameterClass="map" >
+		update sync_request_log set request_status=#status#,return_message=#message# where ID=#id#
+	</update>
+	
+</sqlMap>

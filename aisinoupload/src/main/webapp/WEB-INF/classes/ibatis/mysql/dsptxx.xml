@@ -1,0 +1,78 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE sqlMap PUBLIC "-//iBATIS.com//DTD SQL Map 2.0//EN" "http://www.ibatis.com/dtd/sql-map-2.dtd">
+<sqlMap>
+	<sql id="queryDsptxxForPageCondition">
+		<dynamic>
+			<isNotEmpty prepend="and" property="dsptbm">
+				DZSWPT.dsptbm= #dsptbm#
+			</isNotEmpty>
+		</dynamic>
+	</sql>
+	<select id="queryDsptxxForList"  resultClass="dsptxxkt">
+		select dsptbm,blrmc,blrzjhm,blrgddh,blrsjh,blryx,zcdssj,zczt,zch,sz_swjg_dm
+               from  dj_dzswpt_kz  where  zczt='0'
+	</select>
+	
+	<select id="queryDsptxxktt"  parameterClass="string" resultClass="dsptxxkt">
+		select dsptbm,blrmc,blrzjhm,blrgddh,blrsjh,blryx,zcdssj,zczt,zch,sz_swjg_dm
+               from  dj_dzswpt_kz  where  zczt='0' and sz_swjg_dm=#swjgDm#
+	</select>
+	
+	<select id="queryDsptxxForObject"  resultClass="dsptxx" parameterClass="string">
+		SELECT dsptbm,dsptmc,icp,dsptip,dswzym,zbdwmc,zbdwswdjzh,frdb,blrmc,blrzjhm,blrgddh,blrsjh,blryx,zcdssj,zczt,
+				frdbzjhm,zbdwdz,zch,sz_swjg_dm from dj_dzswpt dzswpt where dzswpt.dsptbm=#dsptbm#
+	</select>
+	
+	
+	<!-- 	删除WHERE 1=1		 	2014年7月28日15:37:50		-->
+	<select id="queryDsptxxForPage" parameterClass="map" resultClass="dsptxx">
+		SELECT dsptbm,dsptmc,icp,dsptip,dswzym,zbdwmc,zbdwswdjzh,frdb,blrmc,blrzjhm,blrgddh,blrsjh,blryx,zcdssj,zczt,
+				frdbzjhm,zbdwdz,zch,sz_swjg_dm, DATE_FORMAT(xgsj,'%Y-%m-%d %H:%i:%s') updatetime FROM dj_dzswpt DZSWPT
+		 limit #beginRow#,#pageSize#
+	</select>
+	
+	<select id="queryDsptxxktForPage" parameterClass="map" resultClass="dsptxxkt">
+		select dsptbm,blrmc,blrzjhm,blrgddh,blrsjh,blryx,zcdssj,zczt,zch,sz_swjg_dm
+               from  dj_dzswpt_kz  where  1 = 1
+		 limit #beginRow#,#pageSize#
+	</select>
+	<!-- 	删除	Where 1=1	2014年7月28日15:38:53 -->
+	<select id="queryDsptxxktForPageCount" parameterClass="map" resultClass="int">
+		select count(1) as cnt from dj_dzswpt_kz DZSWPT 
+	</select>
+	
+	<select id="queryDsptxxForPageCount" parameterClass="map" resultClass="int">
+		select count(1) as cnt from dj_dzswpt DZSWPT where 1=1
+		<include refid="queryDsptxxForPageCondition"/>
+	</select>
+	
+	<update id="updateDjDzswpt" parameterClass="dsptxx">
+		update dj_dzswpt t set t.dsptmc=#dsptmc#,t.icp=#icp#,t.dsptip=#dsptip# ,t.dswzym=#dswzym#,t.zbdwmc=#zbdwmc#,t.zbdwswdjzh=#zbdwswdjzh# ,t.frdb=#frdb#
+						,t.blrmc=#blrmc#,t.blrzjhm=#blrzjhm# ,t.blrgddh=#blrgddh#,t.blrsjh=#blrsjh#,t.blryx=#blryx#,t.zcdssj=date_format(#zcdssj#,'%Y-%m-%d %T'),t.frdbzjhm=#frdbzjhm#,t.zbdwdz=#zbdwdz# ,t.zch=#zch#       
+		where t.dsptbm=#dsptbm#
+	</update>
+	
+	<insert id="saveDjDzswpt" parameterClass="dsptxx">
+      insert into dj_dzswpt(dsptmc,icp,dsptip,dswzym,zbdwmc,zbdwswdjzh,frdb,frdbzjhm,zbdwdz,xgsj)values
+        (#dsptmc#,#icp#,#dsptip#,#dswzym#,#zbdwmc#,#zbdwswdjzh#,#frdb#,#frdbzjhm#,#zbdwdz#,now())
+    </insert>
+    
+	<insert id="saveDjDzswptkz" parameterClass="dsptxx">
+     insert into dj_dzswpt_kz  (dsptbm,blrmc,blrzjhm,blrgddh,blrsjh,blryx,zcdssj,zch,sz_swjg_dm,zczt)
+      values(#dsptbm#,#blrmc#,#blrzjhm#,#blrgddh#,#blrsjh#,#blryx#,date_format(#zcdssj#,'%Y-%m-%d %T'),#zch#,#sz_swjg_dm#,#zczt#)
+    </insert>
+    
+	<delete id="deleteDjDzswpt" parameterClass="map">
+     	 delete from dj_dzswpt  
+    </delete>
+	<delete id="deleteDjDzswptkz" parameterClass="string">
+     	 delete from dj_dzswpt_kz where dsptbm=#dsptbm#
+    </delete>
+    
+    <select id="queryzcmByDsptbm" parameterClass="string" resultClass="string">
+		select zch from dj_dzswpt_kz where dsptbm = #dsptbm#        
+    </select>
+    <select id="queryfperrorcount" parameterClass="string" resultClass="string">
+        select error_count from fp_kj_log where id = #fp_id#
+    </select>
+</sqlMap> 

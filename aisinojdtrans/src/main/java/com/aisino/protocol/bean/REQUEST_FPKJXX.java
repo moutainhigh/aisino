@@ -1,0 +1,63 @@
+package com.aisino.protocol.bean;
+
+/**京东接口对接
+ * @author jerome
+ *
+ */
+public class REQUEST_FPKJXX {
+	public FPKJXX_FPTXX FPKJXX_FPTXX;
+	public FPKJXX_XMXX[] FPKJXX_XMXXS;
+	public FPKJXX_DDXX FPKJXX_DDXX;
+	public FPKJXX_DDMXXX[] FPKJXX_DDMXXXS;
+	public FPKJXX_ZFXX FPKJXX_ZFXX;
+	public FPKJXX_WLXX FPKJXX_WLXX;
+
+	public FPKJXX_FPTXX getFPKJXX_FPTXX() {
+		return FPKJXX_FPTXX;
+	}
+
+	public void setFPKJXX_FPTXX(FPKJXX_FPTXX fPKJXX_FPTXX) {
+		FPKJXX_FPTXX = fPKJXX_FPTXX;
+	}
+
+	public FPKJXX_XMXX[] getFPKJXX_XMXXS() {
+		return FPKJXX_XMXXS;
+	}
+
+	public void setFPKJXX_XMXXS(FPKJXX_XMXX[] fPKJXX_XMXXS) {
+		FPKJXX_XMXXS = fPKJXX_XMXXS;
+	}
+
+	public FPKJXX_DDXX getFPKJXX_DDXX() {
+		return FPKJXX_DDXX;
+	}
+
+	public void setFPKJXX_DDXX(FPKJXX_DDXX fPKJXX_DDXX) {
+		FPKJXX_DDXX = fPKJXX_DDXX;
+	}
+
+	public FPKJXX_DDMXXX[] getFPKJXX_DDMXXXS() {
+		return FPKJXX_DDMXXXS;
+	}
+
+	public void setFPKJXX_DDMXXXS(FPKJXX_DDMXXX[] fPKJXX_DDMXXXS) {
+		FPKJXX_DDMXXXS = fPKJXX_DDMXXXS;
+	}
+
+	public FPKJXX_ZFXX getFPKJXX_ZFXX() {
+		return FPKJXX_ZFXX;
+	}
+
+	public void setFPKJXX_ZFXX(FPKJXX_ZFXX fPKJXX_ZFXX) {
+		FPKJXX_ZFXX = fPKJXX_ZFXX;
+	}
+
+	public FPKJXX_WLXX getFPKJXX_WLXX() {
+		return FPKJXX_WLXX;
+	}
+
+	public void setFPKJXX_WLXX(FPKJXX_WLXX fPKJXX_WLXX) {
+		FPKJXX_WLXX = fPKJXX_WLXX;
+	}
+
+}

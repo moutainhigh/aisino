@@ -1,0 +1,41 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE sqlMapConfig PUBLIC "-//iBATIS.com//DTD SQL Map Config 2.0//EN" "http://www.ibatis.com/dtd/sql-map-config-2.dtd">
+<sqlMapConfig>
+<settings cacheModelsEnabled="true" enhancementEnabled="true" lazyLoadingEnabled="false" maxRequests="20" maxSessions="10"
+		maxTransactions="50" useStatementNamespaces="true" />
+	<typeAlias alias="user" type="com.aisino.domain.sys.model.User"/>
+	<typeAlias alias="role" type="com.aisino.domain.sys.model.Role"/>
+	<typeAlias alias="roleMenu" type="com.aisino.domain.sys.model.RoleMenu"/>
+	<typeAlias alias="menu" type="com.aisino.domain.sys.model.Menu"/>
+	<typeAlias alias="route" type="com.aisino.domain.sys.model.Route"/>	
+	<typeAlias alias="yzpyxz" type="com.aisino.protocol.bean.RESPONSE_PYXZ"/>
+	<typeAlias alias="fpkj" type="com.aisino.domain.einvoice.model.Fpkj"/>
+	<typeAlias alias="fpkjmx" type="com.aisino.domain.einvoice.model.Fpkjmx"/>
+	<typeAlias alias="ddxx" type="com.aisino.domain.einvoice.model.Ddxx"/>
+	<typeAlias alias="dsptxx" type="com.aisino.domain.einvoice.model.Dsptxx"/>
+	<typeAlias alias="dsptxxkt" type="com.aisino.domain.einvoice.model.Dsptxxkt"/>
+	<typeAlias alias="qyNsrxx" type="com.aisino.domain.einvoice.model.QyNsrxx"/>
+	<typeAlias alias="REQUEST_DSQYPYXX" type="com.aisino.protocol.bean.REQUEST_DSQYPYXX"/>
+	<typeAlias alias="REQUEST_FPKJ" type="com.aisino.protocol.bean.REQUEST_FPKJ"/>
+	<typeAlias alias="PushInvoiceQueueEntity" type="com.aisino.domain.rabbit.entity.PushInvoiceQueueEntity"/>
+	
+	<typeAlias alias="FPKJXX_FPTXX" type="com.aisino.protocol.bean.FPKJXX_FPTXX"/>
+	
+	<typeAlias alias="FP_WLXX" type="com.aisino.protocol.bean.FP_WLXX"/>
+	<typeAlias alias="FP_KJMX" type="com.aisino.protocol.bean.FP_KJMX"/>
+	<typeAlias alias="FP_ZFXX" type="com.aisino.protocol.bean.FP_ZFXX"/>
+	<typeAlias alias="FP_DDXX" type="com.aisino.protocol.bean.FP_DDXX"/>
+	<typeAlias alias="FpscLsh" type="com.aisino.protocol.bean.FpscLsh"/>
+	<typeAlias alias="swjg" type="com.aisino.domain.einvoice.model.Swjg"/>
+	<typeAlias alias="routexx" type="com.aisino.domain.sys.model.Route"/>
+    <typeAlias alias="FpDoneLog" type="com.aisino.domain.einvoice.model.FpDoneLog"/>
+	<sqlMap resource="ibatis/mysql/User.xml"/>
+	<sqlMap resource="ibatis/mysql/Role.xml"/>
+	<sqlMap resource="ibatis/mysql/JkService.xml"/>
+	<sqlMap resource="ibatis/mysql/task.xml"/> 
+	<sqlMap resource="ibatis/mysql/Fpth.xml"/> 
+	<sqlMap resource="ibatis/mysql/dsptxx.xml"/> 
+	<sqlMap resource="ibatis/mysql/Route.xml"/> 
+	<sqlMap resource="ibatis/mysql/SyncRequestLog.xml"/>
+	<sqlMap resource="ibatis/mysql/modifyfpzt.xml"/>
+</sqlMapConfig>

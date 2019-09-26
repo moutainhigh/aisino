@@ -1,0 +1,42 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE sqlMap PUBLIC "-//iBATIS.com//DTD SQL Map 2.0//EN" "http://www.ibatis.com/dtd/sql-map-2.dtd">
+<sqlMap>
+    <sql id="queryRoutesForPageCondition">
+        <dynamic>
+            <isNotEmpty prepend="and" property="swjg">
+                t.SWJG_DM = #swjg#
+            </isNotEmpty>
+            <isNotEmpty prepend="and" property="yxbz">
+                t.YXBZ = #yxbz#
+            </isNotEmpty>
+        </dynamic>
+    </sql>
+    <select id="queryRoutesForPage" parameterClass="map" resultClass="route">
+        select t.ID,t.URL,t.SWJG_DM swjgDm,t.YXBZ,t.QQFS,t.METHOD,t.USERNAME,t.PWD,t.SWJG_MC swjgMc
+        from t_route t where 1=1
+        <include refid="queryRoutesForPageCondition"/>
+        limit #beginRow#,#pageSize#
+    </select>
+    <select id="queryRoutesForPageCount" parameterClass="map" resultClass="int">
+        select count(1) as cnt
+        from t_route t where 1=1
+        <include refid="queryRoutesForPageCondition"/>
+    </select>
+    <select id="getRouteById" parameterClass="string" resultClass="route">
+        select t.ID,t.URL,t.SWJG_DM swjgDm,t.YXBZ,t.QQFS,t.METHOD,t.USERNAME,t.PWD,t.SWJG_MC swjgMc
+        from t_route t where t.id=#id#
+    </select>
+    <select id="getRouteBySwjg_dm" parameterClass="string" resultClass="string">
+        select t.swjg_dm from t_route t where t.swjg_dm=#swjg_dm#
+    </select>
+    <update id="updateRoute" parameterClass="map">
+        update t_route set URL=#url#, SWJG_DM=#swjg#
+        ,YXBZ=#yxbz#,QQFS=#qqfs#,METHOD=#method#,USERNAME=#username#,SWJG_MC=#swjgmc#
+        where ID=#id#
+    </update>
+    <insert id="insertRoute" parameterClass="map">
+        insert into t_route(URL,SWJG_DM,YXBZ,QQFS,METHOD,USERNAME,SWJG_MC)
+        values
+        (#url#,#swjg#,#yxbz#,#qqfs#,#method#,#username#,#swjgmc#)
+    </insert>
+</sqlMap>

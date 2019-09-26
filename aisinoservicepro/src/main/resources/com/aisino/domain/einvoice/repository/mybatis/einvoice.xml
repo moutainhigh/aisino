@@ -1,0 +1,502 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.aisino.domain.einvoice">
+
+    <!-- 查询最新一条记录作为开具发票使用 -->
+    <select id="getInvoiceBalanceInfo" resultType="InvoiceBalanceInfo">
+        SELECT * FROM (SELECT
+                    NSRSBH taxpayerIdentifyNo,
+                    NSRDZDAH taxpayerEDNo,
+                    FP_DM invoiceCode,
+                    FPQH invoiceNo,
+                    FPZL_DM invoiceKindCode,
+                    FPZH invoiceEndNo,
+                    FS invoiceCopies,
+                    SWJG_DM taxOfficeRegCode,
+                    NSR_SWJG_DM taxpayerTaxOfficeRegCode,
+                    FSRQ releaseDate
+        FROM fp_nsrjc
+        WHERE NSRSBH = #{taxpayerIdentifyNo}
+        ORDER BY FPQH) AS fp_nsrjc
+        LIMIT 0,1
+    </select>
+
+    <!-- 判断是否是结存中最后一条记录，如果是的话删除结存记录信息 -->
+    <delete id="delInvoiceBalanceInfo" parameterType="InvoiceBalanceInfo">
+        DELETE FROM fp_nsrjc
+        WHERE NSRSBH = #{taxpayerIdentifyNo}
+        AND FP_DM = #{invoiceCode}
+        AND FPQH= #{invoiceNo}
+        AND FPZH = #{invoiceEndNo}
+        AND FPZL_DM= #{invoiceKindCode}
+    </delete>
+
+    <!-- 修改发票结存信息 -->
+    <update id="updateInvoiceBalanceInfo" parameterType="InvoiceBalanceInfo">
+        UPDATE fp_nsrjc SET
+        FPQH = LPAD(CAST(FPQH AS decimal) + 1,8,'0'),
+        FS = FS - 1
+        WHERE NSRSBH = #{taxpayerIdentifyNo}
+        AND FP_DM = #{invoiceCode}
+        AND FPZH = #{invoiceEndNo}
+        AND FPZL_DM=#{invoiceKindCode}
+    </update>
+
+    <select id="obtainUniqueCacheIdByTypeName" parameterType="map" resultType="long">
+        select currentvalue from t_uniqueid where typename=#{typeName}
+    </select>
+
+    <update id="updateUniqueCacheIdByTypeName" parameterType="map">
+        update t_uniqueid set currentvalue=currentvalue+#{cacheSize} where typeName=#{typeName}
+    </update>
+
+    <!-- 根据发票ID，查询发票状态 -->
+    <select id="queryInvoiceStatusById" parameterType="map" resultType="String">
+        select FPKJ_ZT from fp_kj_log where id = #{invoiceId}
+    </select>
+
+    <!-- 根据发票ID，查询发票信息 -->
+    <select id="getInvoiceEntityById" parameterType="map" resultType="InvoiceEntityInfo">
+        select * from (
+               select lg.ID invoiceId,
+                          lg.KPRQ billingDate,
+                          lg.FP_DM invoiceCode,
+                          lg.FP_HM invoiceNo,
+                          lg.NSRSBH taxpayerIdentifyNo,
+                          lg.FPKJ_ZT invoiceStatus,
+			              lg.ERROR_COUNT operateCount,
+			              kj.FPZL_DM invoiceKindCode,
+			              kj.HJBHSJE infoAmount,
+						  kj.KPHJSE infoTaxAmount,
+						  kj.SSYF InfoMonth,
+						  kj.XHQDBZ goodsListFlag,
+						  kj.RETCODE retCode,
+						  kj.FWMW ciphertext,
+						  kj.JYM checkCode,
+						  kj.EWM twoDimensionCode,
+						  kj.SZQM infoInvoicer,
+						  kj.bz bz
+               from  fp_kj_log lg, fp_kj kj
+               where lg.id=kj.id and lg.ID= #{invoiceId}
+        ) info
+    </select>
+
+    <!-- 将结存信息(发票号码，发票代码，开票日期)持久化到FP_KJ_LOG表 -->
+    <update id="updateInvoiceEntityBalanceInfoForFPKJLOG" parameterType="InvoiceEntityInfo">
+         update fp_kj_log
+                set FP_DM = #{invoiceCode},
+                      FP_HM = #{invoiceNo},
+                      KPRQ = #{infoDate},
+                      updatetime = now()
+          where id = #{invoiceId}
+    </update>
+
+    <!-- 将结存信息(发票号码，发票代码，发票种类，开票日期)持久化到FP_KJ表 -->
+    <update id="updateInvoiceEntityBalanceInfoForFPKJ" parameterType="InvoiceEntityInfo">
+         update fp_kj
+                set FP_DM = #{invoiceCode},
+                      FP_HM = #{invoiceNo},
+                      FPZL_DM = #{invoiceKindCode},
+                      HJBHSJE=#{infoAmount},
+					  KPHJSE=#{infoTaxAmount},
+					  SSYF=#{infoMonth},
+					  XHQDBZ=#{goodsListFlag},
+					  RETCODE=#{retCode},
+					  FWMW=#{ciphertext},
+					  JYM=#{checkCode},
+					  SZQM=#{infoInvoicer},
+                      KPRQ = #{infoDate},
+                      FJH = #{fjh},
+                      XHQD = #{goodsList}
+             <if test="twoDimensionCode!=null">
+             	,EWM=#{twoDimensionCode}
+             </if>
+             <if test="jqbh!=null">
+             	,JQBH=#{jqbh}
+             </if>
+             <if test="bz!=null">
+             	,BZ=#{bz}
+             </if>
+        where ID = #{invoiceId}
+    </update>
+
+    <!-- 更新发票下发过程中的发票信息 -->
+    <update id="updateInvoiceEntityForIssued" parameterType="InvoiceEntityInfo">
+         update fp_kj_log
+                set fpkj_zt = #{invoiceStatus},
+                      error_count = 0,
+                      error_msg = '',
+                      updatetime = now()
+          where id = #{invoiceId}
+    </update>
+
+    <!-- 保存发票错误信息，更新错误状态，自增发票操作次数 -->
+    <update id="updateInvoiceErrorInfo" parameterType="InvoiceEntityInfo">
+         update fp_kj_log
+                set fpkj_zt = #{invoiceStatus},
+                      error_msg = #{errorMsg},
+                      error_count = error_count + 1,
+                      updatetime = now()
+          where id = #{invoiceId}
+    </update>
+
+    <!-- 根据发票ID查询签章ID -->
+    <select id="querySignatureByInvoiceId" parameterType="map" resultType="String">
+        select qz.QZID signatureId
+         from fp_qzcx qz
+       where qz.NSRSBH = (select kj.NSRSBH from fp_kj kj where kj.id=#{invoiceId})
+    </select>
+
+    <!-- 获取电商平台信息 -->
+    <select id="queryEShopInfoByCondition" resultType="EShopInfo">
+         select k.dsptmc eshopName,
+                    t.dsptbm eshopCode,
+                    k.platform_code platformCode,
+                    t.blrmc transactorName,
+                    t.blrzjhm transactorCertNo,
+                    t.blrgddh transactorTel,
+                    t.blrsjh transactorPhone,
+                    t.blryx transactorEmail,
+                    t.zcdssj eshopRegisterDate,
+                    t.zczt registerStatus,
+                    t.zch registerNo,
+                    t.sz_swjg_dm taxAuthorityCode
+          from dj_dzswpt_kz t ,dj_dzswpt k
+          where t.DSPTBM=k.DSPTBM
+          and t.DSPTBM=#{eshopCode}
+    </select>
+
+    <!-- 获取电商平台丰富信息 -->
+    <select id="queryEShopDetailsInfoByCondition" resultType="EShopInfo">
+        SELECT d.PLATFORM_CODE eshopCode,
+                d.DSPTMC eshopName,
+                d.ICP icp,
+                d.DSPTIP eShopIp,
+                d.DSWZYM eShopDomain,
+                d.ZBDWMC hostCompany,
+                d.ZBDWDZ hostAddress,
+                d.ZBDWSWDJZH hostCompanyTaxRegisterNo,
+                d.FRDB legalName,
+                d.FRDBZJHM legalNameCertNo,
+                d.BLRMC transactorName,
+                d.BLRZJHM transactorCertNo,
+                d.BLRGDDH transactorTel,
+                d.BLRSJH transactorPhone,
+                d.BLRYX transactorEmail,
+            	DATE_FORMAT( d.ZCDSSJ,'%Y-%m-%d %H:%i:%s') eshopRegisterDateValue,
+                d.ZCZT registerStatus,
+                d.ZCH registerNo,
+                d.SZ_SWJG_DM taxAuthorityCode
+		FROM dj_dzswpt d, dj_dzswpt_kz  j
+		WHERE d.DSPTBM = j.DSPTBM
+		AND d.PLATFORM_CODE = #{eshopCode}
+    </select>
+
+    <!-- 获取发票开具明细信息信息 -->
+    <select id="queryInvoiceDetailEntityByCondition" resultType="InvoiceDetailEntityInfo">
+         SELECT T.SPMC itemName,
+                          T.JLDW unitName,
+                          T.GGXH specificationModel,
+                          T.SPSL itemCount,
+                          T.SPDJ itemUnitCost,
+                          T.SPJE itemAmount,
+                          T.SM listTaxItem,
+						  T.SL infoTaxRate,
+						  T.JLDW listUnit,
+						  T.HSJBZ listPriceKind,
+						  T.SE listTaxAmount,
+						  T.FPHXZ invoiceLineProperty,
+						  T.SPBM goodsCode,
+						  T.ZXBM selfCoding,
+						  T.YHZCBS preferentialMarking,
+						  T.LSLBS zeroTariff,
+						  T.ZZSTSGL specialManagement,
+						  T.KCE deductions
+        FROM     fp_kjmx T
+        WHERE  KJID = #{invoiceId}
+    </select>
+    
+     <select id="queryfjh" resultType="map">
+         SELECT fjh
+        FROM     fp_kj 
+        WHERE  fp_dm = #{yfp_dm} and fp_hm=#{yfp_hm}
+    </select>
+    
+    <select id="queryfpqqlsh" resultType="String">
+         SELECT CURRENTVALUE
+        FROM     t_uniqueid 
+        WHERE TYPENAME='FPQQLSH'
+    </select>
+    
+    <update id="updatefpqqlsh" >
+        update t_uniqueid t set  t.CURRENTVALUE=t.CURRENTVALUE+1 where t.TYPENAME='FPQQLSH'
+    </update>
+    
+        <!-- 获取发票票种信息 -->
+    <select id="queryInvoiceKindCodeByCondition" resultType="InvoiceBalanceInfo">
+         SELECT p.FPZL_DM  invoiceKindCode
+        FROM     fp_pz p
+        WHERE  p.NSRSBH = #{taxpayerIdentifyNo}
+    </select>
+
+    <!-- 更新原蓝票的"冲红标志" 以及 "剩余可冲红金额"(归零) -->
+    <update id="updateRemainingInvoiceNoteAmount" parameterType="InvoiceEntityInfo">
+        UPDATE fp_kj
+        SET
+            SYKCHJE = '0',
+            ch_bz = '1'
+        WHERE
+            NSRSBH = #{taxpayerIdentifyNo}
+            AND FP_DM = #{oldInvoiceCode}
+            AND FP_HM= #{oldInvoiceNo}
+            AND KPLX = #{billingType}
+    </update>
+
+    <!-- 更新红票的"剩余可冲红金额"(归零) 以及 是否特殊冲红发票 -->
+    <update id="updateRemainingCreditNoteAmount" parameterType="InvoiceEntityInfo">
+        UPDATE fp_kj
+        SET
+            SYKCHJE = '0',
+            TSCHBZ = #{specRedInvoiceFlag}
+        WHERE
+            NSRSBH = #{taxpayerIdentifyNo}
+            AND FP_DM = #{invoiceCode}
+            AND FP_HM = #{invoiceNo}
+            AND KPLX = #{billingType}
+    </update>
+
+    <!-- 更新发票订单信息的发票代码，发票号码 -->
+    <update id="updateCodeAndNoForInvoiceOrder" parameterType="InvoiceOrderEntityInfo">
+        UPDATE fp_ddxx
+        SET FP_DM = #{invoiceCode},
+                 FP_HM = #{invoiceNo}
+        where FP_KJID = #{invoiceId}
+    </update>
+
+    <!-- 更新发票开具明细信息的发票代码，发票号码 -->
+    <update id="updateCodeAndNoForInvoiceDetail" parameterType="InvoiceDetailEntityInfo">
+        UPDATE fp_kjmx
+        SET FP_DM = #{invoiceCode},
+                 FP_HM = #{invoiceNo}
+        where KJID = #{invoiceId}
+    </update>
+
+    <!-- 更新发票物流信息的发票代码，发票号码 -->
+    <update id="updateCodeAndNoForInvoiceLogistics" parameterType="InvoiceLogisticsEntityInfo">
+        UPDATE fp_wlxx
+        SET FP_DM = #{invoiceCode},
+                 FP_HM = #{invoiceNo}
+        where FP_KJID = #{invoiceId}
+    </update>
+
+    <!-- 更新发票支付信息的发票代码，发票号码 -->
+    <update id="updateCodeAndNoForInvoicePayment" parameterType="InvoicePaymentEntityInfo">
+        UPDATE fp_zfxx
+        SET FP_DM = #{invoiceCode},
+                 FP_HM = #{invoiceNo}
+        where FP_KJID = #{invoiceId}
+    </update>
+
+    <!-- 更新开票过程中的FP_KJ表的相关字段 -->
+    <update id="updateInvoiceInfoForGenerateInvoice" parameterType="InvoiceEntityInfo">
+        UPDATE fp_kj
+        SET  PDFPATCH = #{pdfPath},
+                  EWM = #{twoDimensionCode},
+                  SKM = #{fiscalCode},
+                  KPLSH = #{invoiceSerialNo}
+        where ID = #{invoiceId}
+    </update>
+
+    <!-- 更新开票过程中的FP_KJ_LOG表的相关字段 -->
+    <update id="updateInvoiceExtendInfoForGenerateInvoice" parameterType="InvoiceEntityInfo">
+        UPDATE fp_kj_log
+        SET  error_count = 0,
+                  error_msg = '',
+                  fpkj_zt = #{invoiceStatus},
+                  updatetime = now()
+        where ID = #{invoiceId}
+    </update>
+
+    <insert id="insertTUunique" parameterType="map">
+        insert into t_unique value(#{cValue})
+    </insert>
+
+    <insert id="insertTLost" parameterType="map">
+        insert into t_lost value(#{taxpayerIdentifyNo},#{invoiceNo},null,'0',now(),null)
+    </insert>
+
+    <update id="updateTLost" parameterType="map">
+        UPDATE t_lost
+        SET  invoice_id = #{invoiceId},
+                  upd_time = now()
+        where invoice_no = #{invoiceNo}
+    </update>
+
+    <update id="updateTLostFlag" parameterType="map">
+        UPDATE t_lost
+        SET  flag = '1',
+                  upd_time = now()
+        where invoice_no = #{invoiceNo}
+    </update>
+
+    <!--获取电子发票PDF文件模板方法-->
+    <select id="getInvoiceTemplate" resultType="InvoiceTemplate" parameterType="map">
+        select code,pyfileurl fpfile,
+        twmleft,twmright,qzleft,qztop,
+        qzright,qzbottom,qzpageindex
+        from dm_dymb lxf
+        where nsrsbh = #{departCode}
+        and mxmaxleng = #{len}
+    </select>
+
+    <!-- 获取证书信息 -->
+    <select id="getCertificateEntity" resultType="CertificateEntityInfo">
+        SELECT
+                kz.zch registerNo,
+                n.AUTH_CODE authCode,
+                c.id,
+                c.PLATFORM_CODE platformCode,
+                c.taxpayer_identify_no taxpayerIdentifyNo,
+                c.public_key publicKey,
+                c.private_key privateKey,
+                c.trust  trust,
+                c.password password
+                FROM t_client_certificate c
+                INNER JOIN dj_dzswpt ds ON c.PLATFORM_CODE=ds.PLATFORM_CODE
+				INNER JOIN dj_dzswpt_kz kz ON kz.DSPTBM=ds.DSPTBM
+                INNER JOIN dj_nsrxx n ON c.taxpayer_identify_no=n.NSRSBH
+                WHERE c.AVAILABLE=1
+                AND c.PLATFORM_CODE = #{platformCode}
+                AND c.taxpayer_identify_no=#{taxpayerIdentifyNo}
+                AND  kz.zch=#{registerNo}
+                AND n.auth_code=#{authCode}
+    </select>
+
+    <!-- 获取证书信息 -->
+    <select id="getCertificateEntityByTaxpayerIdentifyNo" resultType="CertificateEntityInfo">
+        SELECT
+        c.id,
+        c.PLATFORM_CODE platformCode,
+        c.taxpayer_identify_no taxpayerIdentifyNo,
+        c.public_key publicKey,
+        c.private_key privateKey,
+        c.trust  trust,
+        c.password password
+        FROM t_client_certificate c
+        WHERE c.AVAILABLE=1
+        AND c.taxpayer_identify_no=#{value}
+    </select>
+
+    <!-- 获取纳税人路由信息 -->
+    <select id="getTaxpayerRouteEntity" resultType="TaxpayerRouteEntityInfo">
+        SELECT
+        t.ID,
+        t.TAXPAYER_IDENTIFY_NO taxpayerIdentifyNo,
+        t.URL url,
+        t.WSFFM wsMethodName,
+        t.JMLX encrypType,
+        t.AVAILABLE available,
+        t.CREATED_DATE createdDate
+        FROM t_taxpayer_route t
+        WHERE
+        t.TAXPAYER_IDENTIFY_NO = #{taxpayerIdentifyNo}
+        <if test="available!=null">
+            AND t.AVAILABLE = #{available}
+        </if>
+    </select>
+    
+        <!-- 根据纳税人识别号获取纳税人路由信息 -->
+    <select id="getTaxcodeRouteEntity" resultType="TaxcodeRouteEntityInfo">
+        SELECT
+        t.ID,
+        t.TAXPAYER_IDENTIFY_NO taxpayerIdentifyNo,
+        t.LP_URL lpurl,
+        t.HP_URL hpurl,
+        t.WSFFM wsMethodName,
+        t.JMLX encrypType,
+        t.AVAILABLE available,
+        t.CREATED_DATE createdDate,
+        t.VERSION_NO versionNo
+        FROM t_taxcode_route t
+        WHERE
+        t.TAXPAYER_IDENTIFY_NO = #{nsrsbh}
+    </select>
+
+    <!-- 新增纳税人路由信息 -->
+    <insert id="saveTaxpayerRouteEntity">
+         INSERT INTO t_taxpayer_route(
+              TAXPAYER_IDENTIFY_NO,
+              URL,
+              WSFFM,
+              JMLX,
+              CREATED_DATE
+         )
+         VALUE(
+                #{taxpayerIdentifyNo},
+                #{url},
+                #{wsMethodName},
+                #{encrypType},
+                now()
+              )
+    </insert>
+
+    <!-- 删除纳税人路由信息 -->
+    <delete id="deleteTaxpayerRouteEntity">
+        DELETE FROM t_taxpayer_route
+        WHERE ID = #{id}
+    </delete>
+
+    <!-- 启用/停用 纳税人路由推送功能 -->
+    <update id="enableTaxpayerRouteEntity">
+        UPDATE t_taxpayer_route
+        SET  AVAILABLE = #{available}
+        WHERE ID = #{id}
+    </update>
+
+    <!-- 更新发票推送状态 -->
+    <update id="updateInvoicePushState">
+        UPDATE fp_kj_log
+        SET  FPkj_ZT = #{pushState},error_msg = '',pushTime=now()
+        WHERE ID = #{invoiceId}
+    </update>
+    
+    <!-- 更新发票赋码状态 -->
+    <update id="updateInvoiceTaxCodeState">
+        UPDATE fp_kj_log
+        SET  FPKJ_ZT = #{taxcodeState},error_msg = ''
+        WHERE ID = #{invoiceId}
+    </update>
+    
+    <!-- 更新发票开票类型 -->
+    <update id="updateInvoiceBillingType">
+        UPDATE fp_kj
+        SET  KPLX = #{billingType}
+        WHERE ID = #{invoiceId}
+    </update>
+    
+   <!-- 根据纳税人编号获取电商平台丰富信息 -->
+    <select id="queryEShopDetailsInfoByNsrbh" resultType="EShopInfo">
+        SELECT d.DSPTBM eshopCode,
+                d.DSPTMC eshopName,
+                d.ICP icp,
+                d.DSPTIP eShopIp,
+                d.DSWZYM eShopDomain,
+                d.ZBDWMC hostCompany,
+                d.ZBDWDZ hostAddress,
+                d.ZBDWSWDJZH hostCompanyTaxRegisterNo,
+                d.FRDB legalName,
+                d.FRDBZJHM legalNameCertNo,
+                d.BLRMC transactorName,
+                d.BLRZJHM transactorCertNo,
+                d.BLRGDDH transactorTel,
+                d.BLRSJH transactorPhone,
+                d.BLRYX transactorEmail,
+            	DATE_FORMAT( d.ZCDSSJ,'%Y-%m-%d %H:%i:%s') eshopRegisterDateValue,
+                d.ZCZT registerStatus,
+                d.ZCH registerNo,
+                d.SZ_SWJG_DM taxAuthorityCode
+			FROM dj_dzswpt d LEFT JOIN  dj_dzswpt_kz  j ON d.DSPTBM = j.DSPTBM LEFT JOIN dj_nsrxx f ON d.DSPTBM = f.DSPTBM
+			AND f.nsrsbh = #{nsrsbh}
+    </select>
+</mapper>

@@ -1,0 +1,35 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE configuration PUBLIC "-//mybatis.org//DTD Config 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-config.dtd">
+<configuration>
+    <settings>
+        <setting name="defaultExecutorType" value="REUSE"/>
+    </settings>
+    <typeAliases>
+        <typeAlias alias="InvoiceTemplate" type="com.aisino.protocol.bean.KBFPMBXX"/>
+
+        <typeAlias alias="InvoiceBalanceInfo" type="com.aisino.domain.einvoice.entity.InvoiceBalance"/>
+        <typeAlias alias="InvoiceEntityInfo" type="com.aisino.domain.einvoice.entity.InvoiceEntity"/>
+        <typeAlias alias="EShopInfo" type="com.aisino.domain.einvoice.entity.EShopInfo"/>
+        <typeAlias alias="InvoiceDetailEntityInfo" type="com.aisino.domain.einvoice.entity.InvoiceDetailEntity"/>
+        <typeAlias alias="InvoiceOrderEntityInfo" type="com.aisino.domain.einvoice.entity.InvoiceOrderEntity"/>
+        <typeAlias alias="InvoiceLogisticsEntityInfo" type="com.aisino.domain.einvoice.entity.InvoiceLogisticsEntity"/>
+        <typeAlias alias="InvoicePaymentEntityInfo" type="com.aisino.domain.einvoice.entity.InvoicePaymentEntity"/>
+        <typeAlias alias="InvoiceHeaderEntityInfo" type="com.aisino.domain.einvoice.entity.InvoiceHeaderEntity"/>
+        <typeAlias alias="CertificateEntityInfo" type="com.aisino.domain.einvoice.entity.CertificateEntity"/>
+        <typeAlias alias="TaxpayerRouteEntityInfo" type="com.aisino.domain.einvoice.entity.TaxpayerRouteEntity"/>
+        <typeAlias alias="TaxpayerEntityInfo" type="com.aisino.domain.einvoice.entity.TaxpayerEntity"/>
+        <typeAlias alias="InvoicePDFInfo" type="com.aisino.domain.einvoice.entity.InvoicePDFInfoEntity"/>
+        <typeAlias alias="InvoiceKindInfo" type="com.aisino.domain.einvoice.entity.InvoiceKindInfoEntity"/>
+        <typeAlias alias="GeneratorInvoiceQueueEntityInfo" type="com.aisino.domain.rabbit.entity.GeneratorInvoiceQueueEntity"/>
+        <typeAlias alias="PushInvoiceQueueEntityInfo" type="com.aisino.domain.rabbit.entity.PushInvoiceQueueEntity"/>
+        <typeAlias alias="SentToTaxQueueEntityInfo" type="com.aisino.domain.rabbit.entity.SentToTaxQueueEntity"/>
+		<typeAlias alias="TaxcodeRouteEntityInfo" type="com.aisino.domain.einvoice.entity.TaxcodeRouteEntity"/>
+		
+    </typeAliases>
+    <mappers>
+        <mapper resource="com/aisino/domain/einvoice/repository/mybatis/einvoice.xml"/>
+        <mapper resource="com/aisino/domain/einvoice/repository/mybatis/einvoicesub.xml"/>
+        <mapper resource="config/ibatis/invUpload.xml"/>
+    </mappers>
+</configuration>

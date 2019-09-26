@@ -1,0 +1,121 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<beans xmlns="http://www.springframework.org/schema/beans"
+       xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+       xmlns:tx="http://www.springframework.org/schema/tx"
+       xmlns:context="http://www.springframework.org/schema/context"
+       xmlns:rabbit="http://www.springframework.org/schema/rabbit"
+       xmlns:task="http://www.springframework.org/schema/task"
+       xmlns:p="http://www.springframework.org/schema/p"
+       xsi:schemaLocation="http://www.springframework.org/schema/beans
+							http://www.springframework.org/schema/beans/spring-beans.xsd
+							http://www.springframework.org/schema/tx
+							http://www.springframework.org/schema/tx/spring-tx.xsd
+                            http://www.springframework.org/schema/task
+							http://www.springframework.org/schema/task/spring-task.xsd
+						 	http://www.springframework.org/schema/rabbit
+                            http://www.springframework.org/schema/rabbit/spring-rabbit-1.3.xsd
+						 	http://www.springframework.org/schema/context
+						 	http://www.springframework.org/schema/context/spring-context.xsd">
+    <context:property-placeholder location="classpath*:general.properties"/>
+
+    <context:annotation-config/>
+    <context:spring-configured/>
+    <context:component-scan base-package="com.aisino"/>
+    <tx:annotation-driven transaction-manager="transactionManager"/>
+
+    <import resource="classpath*:/META-INF/zkconfig.xml"/>
+
+    <rabbit:connection-factory id="rabbitConnectionFactory" host="${rabbit.server.ip}" port="${rabbit.server.port}"
+                               channel-cache-size="15" username="${rabbit.server.username}"
+                               password="${rabbit.server.password}"/>
+    <rabbit:queue name="${rabbit.queue.invoice.generator}"/>
+
+    <bean id="rabbitTxManager"
+          class="org.springframework.amqp.rabbit.transaction.RabbitTransactionManager"
+          p:connectionFactory-ref="rabbitConnectionFactory"/>
+
+    <bean id="jsonMessageConverter" class="org.springframework.amqp.support.converter.JsonMessageConverter"/>
+
+    <rabbit:template id="amqpTemplate" connection-factory="rabbitConnectionFactory"  message-converter="jsonMessageConverter"/>
+      
+     <!-- 2017-07-19 宋雪冬 添加双rabbitMQ队列配置，用于把发票订单信息上传至大象平台查询发票开始 -->
+     <rabbit:connection-factory id="rabbitConnectionFactory2"
+		host="${rabbit.server.ip2}" port="${rabbit.server.port2}"
+		channel-cache-size="15" username="${rabbit.server.username2}" password="${rabbit.server.password2}" />
+
+	 <rabbit:queue name="${rabbit.queue.invoice.taxcodefailed}"/>
+	 <rabbit:queue name="${rabbit.queue.invoice.generateinvoicefailed}"/>
+
+	<bean id="rabbitTxManager2" class="org.springframework.amqp.rabbit.transaction.RabbitTransactionManager"
+		p:connectionFactory-ref="rabbitConnectionFactory2" />
+ 
+	<rabbit:template id="amqpTemplate2" connection-factory="rabbitConnectionFactory2" routing-key="${rabbit.queue.invoice.orderinfo}" message-converter="jsonMessageConverter" />   
+	<!-- 2017-07-19 宋雪冬 添加双rabbitMQ队列配置，用于把发票订单信息上传至大象平台查询发票 配置结束 -->
+
+	<rabbit:listener-container concurrency="20" connection-factory="rabbitConnectionFactory"
+                               message-converter="jsonMessageConverter">
+        <!-- 上海监听配置 -->
+        <rabbit:listener ref="invoiceTaxCodeHandler" method="handleMessage"  queue-names="${rabbit.queue.invoice.taxcode}"/>
+        
+        <!-- 北京监听配置(北京的调用东港的webservice) -->
+       <!--  <rabbit:listener ref="invoiceZcTaxCodeHandler" method="handleMessage" queue-names="${rabbit.queue.invoice.taxcode}"/> -->
+                         
+    </rabbit:listener-container>
+	
+    <rabbit:listener-container concurrency="20" connection-factory="rabbitConnectionFactory"
+                               message-converter="jsonMessageConverter">
+      <rabbit:listener ref="invoiceGeneratorHandler" method="handleMessage"
+                         queue-names="${rabbit.queue.invoice.generator}"/>
+    </rabbit:listener-container>
+
+    <rabbit:listener-container concurrency="20" connection-factory="rabbitConnectionFactory"
+                               message-converter="jsonMessageConverter">
+        <rabbit:listener ref="invoicePushHandler" method="handleMessage"
+                         queue-names="${rabbit.queue.invoice.push}"/>
+    </rabbit:listener-container>
+
+    <bean id="dataSource"
+          class="com.alibaba.druid.pool.DruidDataSource"
+          destroy-method="close" init-method="init" p:driverClassName="${jdbc.driverClassName}"
+          p:url="${jdbc.url}" p:connectionProperties="druid.stat.slowSqlMillis=5000;druid.stat.logSlowSql=true"
+          p:username="${jdbc.username}" p:removeAbandoned="true" p:removeAbandonedTimeout="3600" p:logAbandoned="true"
+          p:password="${jdbc.password}" p:minIdle="1"
+          p:maxActive="10" p:poolPreparedStatements="true" p:maxPoolPreparedStatementPerConnectionSize="20"
+          p:initialSize="1" p:maxWait="60000" p:testWhileIdle="true" p:validationQuery="select 1"
+          p:timeBetweenEvictionRunsMillis="60000" p:filters="stat,slf4j">
+        <description>开发环境配置</description>
+    </bean>
+
+    <bean id="transactionManager"
+          class="org.springframework.jdbc.datasource.DataSourceTransactionManager">
+        <property name="dataSource" ref="dataSource"/>
+    </bean>
+
+    <bean id="sqlSessionFactory" class="org.mybatis.spring.SqlSessionFactoryBean"
+          p:dataSource-ref="dataSource" p:configLocation="classpath:config/ibatis/sql-map-config.xml"/>
+
+    <bean id="sqlSessionTemplate" class="org.mybatis.spring.SqlSessionTemplate">
+        <constructor-arg index="0" ref="sqlSessionFactory"/>
+    </bean>
+    
+    <bean id="eInvoiceRepositoryMyBatis"
+		class="com.aisino.domain.einvoice.repository.mybatis.EInvoiceRepositoryMyBatis"
+		p:template-ref="sqlSessionTemplate">
+	</bean>
+    	<!-- 下发方式使用cxf -->
+<!--        	<bean id="webServiceClient" class="com.aisino.common.util.WebServiceCxfClient" /> -->
+     	<!-- 下发方式使用webservice -->
+     	<bean id="webServiceClient" class="com.aisino.common.util.WebServiceWSClient"/> 
+    <!--任务调度配置  begin-->
+    <task:scheduler id="poolTaskScheduler" pool-size="5"/>
+    <task:scheduled-tasks scheduler="poolTaskScheduler">
+    
+   		<task:scheduled ref="einvoiceAntiTask" method="scheduler" cron="0 0/1 * * * ?"/>
+        <task:scheduled ref="einvoiceGenerateTask" method="scheduler" cron="0/15 * * * * ?"/>
+        <task:scheduled ref="einvoicePushTask" method="scheduler" cron="0 0/5 * * * ?"/>
+    	<!--
+        <task:scheduled ref="taxUploadTask" method="scheduler" cron="0 0/45 * * * ?"/>
+         -->
+    </task:scheduled-tasks>
+    <!--任务调度配置  end-->
+</beans>

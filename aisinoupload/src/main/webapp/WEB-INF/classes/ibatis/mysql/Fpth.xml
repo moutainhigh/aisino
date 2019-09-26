@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE sqlMap PUBLIC "-//iBATIS.com//DTD SQL Map 2.0//EN" "http://www.ibatis.com/dtd/sql-map-2.dtd">
+<sqlMap>
+	
+	<select id="getSwjgsAll" resultClass="swjg">
+		select t.ID,t.URL,t.SWJG_DM,t.YXBZ,t.QQFS,t.METHOD,t.USERNAME,t.PWD,t.SWJG_MC
+		from t_route t 
+	</select>
+	<select id="getRoutexxByNsrsbh" resultClass="routexx">
+		select t.NSRSBH,t.DSPTBM,r.URL,r.method ,r.id 
+		from dj_nsrxx t,t_route r 
+		where t.SZ_SWJG_DM=r.SWJG_DM  
+		and t.NSRSBH=#nsrsbh# 
+	</select>
+</sqlMap>

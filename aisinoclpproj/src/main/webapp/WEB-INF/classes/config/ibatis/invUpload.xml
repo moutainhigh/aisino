@@ -1,0 +1,139 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.aisino.domain.einvoice">
+	
+	<!-- <select id="queryPdfSwitch"  resultType="String" useCache="true">
+		select pdf_delete from dj_nsrxx where nsrsbh=#{nsrsbh}
+	</select> -->
+	
+	<select id="queryfpkj" resultType="map">
+        <![CDATA[select t.id, t.FPQQLSH,t.GHFMC,t.GHF_SJ,t.KPHJJE,d.DDH from fp_kj t LEFT JOIN fp_ddxx d ON t.ID=d.FP_KJID  where t.id >#{i} and t.id<=#{i}+100 limit 100]]>
+            
+    </select>
+    <select id="queryfpkjmx" resultType="map">
+        select k.SPMC xmmc,k.SPDJ xmdj,k.SPJE xmje from fp_kjmx k where k.KJID =#{id}
+            
+    </select>
+    <select id="queryfpddmx" resultType="map">
+        select d.SPSL sl ,d.SPDJ dj ,d.SPJE je from fp_ddmxxx d where d.DDH=#{id}
+            
+    </select>
+    <!-- 发票开具反补-->
+    <select id="findEInvoiceGenerate" resultType="GeneratorInvoiceQueueEntityInfo">
+        SELECT
+            kj.ID invoiceId,
+            kj.NSRSBH taxpayerIdentifyNo,
+            kj.NSRMC taxpayer,
+            kj.SZ_SWJG_DM taxAuthorityCode,
+            kj.DSPTBM eshopCode,
+            kj.KPHJJE billingAmount,
+            kj.KPLX billingType,
+            kj.FPQQLSH invoiceRequestSerialNo,
+            kj.YFP_DM oldInvoiceCode,
+            kj.YFP_HM oldInvoiceNo,
+            kj.BZ memo,
+            kj.GHF_SJ buyerMobile,
+            kj.GHF_GDDH buyerFixedPhone,
+            kj.GHF_EMAIL buyerEmail,
+            kj.GHFMC buyerName,
+            kj.GHF_NSRSBH buyerTaxpayerIdentifyNo,
+            kj.GHF_DZ buyerAddress,
+            kj.KPY billingStaff,
+            kj.XHF_NSRSBH sellerTaxpayerIdentifyNo,
+            kj.XHFMC sellerName,
+            kj.HY_MC industryName,
+            kj.KPHJSE InfoTaxAmount,
+            kj.HJBHSJE InfoAmount,
+            kj.FKFYHZH infoClientBankAccount,
+			<!--  
+			CONCAT(kj.GHF_DZ,' ',kj.GHF_GDDH) infoClientAddressPhone,
+			-->
+			kj.GHF_DZ infoClientAddressPhone,
+			kj.SKFYHZH infoSellerBankAccount,
+			CONCAT(kj.XHFDZ,' ',kj.XHFDH) infoSellerAddressPhone,
+			kj.FHR infoChecker,
+			kj.SKY cashier,
+			kj.JQBH jqbh,
+			kj.XHQD infoListName,
+			qz.qzid signatureId,
+			dd.DDH orderNo,
+			kj.BMB_BBH infoSellerVersion,
+			lo.error_msg errorMsg
+	    FROM fp_kj kj LEFT JOIN fp_kj_log lo ON kj.ID = lo.ID LEFT JOIN fp_qzcx qz on qz.NSRSBH = kj.NSRSBH LEFT JOIN fp_ddxx dd on dd.FP_KJID=kj.ID
+        WHERE lo.FPKJ_ZT= #{invoiceStatus}
+        AND <![CDATA[ lo.ERROR_COUNT < #{errorCount}]]>
+        ORDER BY lo.updatetime ASC
+        LIMIT 0, #{amount}
+    </select>
+
+    <!-- 发票推送反补-->
+    <select id="findEInvoicePush" resultType="PushInvoiceQueueEntityInfo">
+        SELECT
+            kj.id invoiceId,
+            kj.DSPTBM eshopCode,
+            kj.PDFPATCH pdfPath,
+            kj.NSRSBH taxpayerIdentifyNo,
+            kj.KPLSH invoiceSerialNo,
+            kj.NSRMC taxpayer,
+            kj.FPQQLSH invoiceRequestSerialNo,
+            kj.SKM fiscalCode,
+            kj.EWM twoDimensionCode,
+            kj.FPZL_DM invoiceKindCode,
+            kj.FP_DM invoiceCode,
+            kj.FP_HM invoiceNo,
+            kj.KPLX billingType,
+            kj.CZDM operatorNo,
+            kj.KPRQ billingDate,
+            dd.DDH orderNo,
+			tr.URL taxpayerUrl,
+			tr.WSFFM wsMethodName,
+			tr.JMLX encrypType
+        FROM fp_kj kj LEFT JOIN fp_kj_log lo ON lo.ID = kj.ID LEFT JOIN t_taxpayer_route tr on kj.NSRSBH = tr.TAXPAYER_IDENTIFY_NO LEFT JOIN fp_ddxx dd on dd.FP_KJID = kj.ID
+        WHERE lo.FPKJ_ZT= #{invoicePushStatus} AND lo.FPSC_ZT=#{invoiceUploadStatus}
+        AND  tr.AVAILABLE = 1
+        ORDER BY lo.updatetime ASC
+        LIMIT 0, #{amount}
+    </select>
+
+    <!-- 上传税局反补-->
+    <select id="findTaxUpload" resultType="SentToTaxQueueEntityInfo">
+         SELECT
+            kj.id invoiceId,
+            kj.DSPTBM eshopCode,
+            kj.SZ_SWJG_DM taxAuthorityCode,
+		   (select ds.zch from dj_dzswpt_kz ds where ds.dsptbm=kj.DSPTBM) registerNo
+		FROM fp_kj kj, fp_kj_log lo
+        WHERE lo.FPKJ_ZT= #{invoiceStatus}
+        AND  lo.id=kj.id
+        AND <![CDATA[ lo.ERROR_COUNT < 4 ]]>
+        ORDER BY lo.updatetime ASC
+        LIMIT 0, #{amount}
+    </select>
+
+    <!-- 批量更新发票状态 -->
+    <update id="updateInvoiceStatus">
+        UPDATE fp_kj_log
+        SET FPKJ_ZT = #{invoiceStatus},
+        ERROR_COUNT = '0',
+        updatetime = now()
+        WHERE ID IN
+        <foreach item="item" index="ind" collection="invoiceIds"
+                 open="(" separator="," close=")">
+            #{item}
+        </foreach>
+    </update>
+
+    <!-- 批量更新发票推送状态 -->
+    <update id="updateInvoicePushStatus">
+        UPDATE fp_kj_log
+        SET FPSC_ZT = #{invoiceUploadStatus},
+        ERROR_COUNT = '0',
+        updatetime = now()
+        WHERE ID IN
+        <foreach item="item" index="ind" collection="invoiceIds"
+                 open="(" separator="," close=")">
+            #{item}
+        </foreach>
+    </update>
+</mapper>

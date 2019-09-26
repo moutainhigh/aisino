@@ -1,0 +1,30 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<beans xmlns="http://www.springframework.org/schema/beans"
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xsi:schemaLocation="http://www.springframework.org/schema/beans 
+    http://www.springframework.org/schema/beans/spring-beans-2.5.xsd"
+	default-autowire="no" default-lazy-init="false">
+	
+	<bean class="org.springframework.web.servlet.handler.BeanNameUrlHandlerMapping" />
+	
+	<!-- 应用只需要配置一个AppContext -->
+	<bean name="myyhdServiceAppContext" class="com.yihaodian.architecture.hedwig.provider.AppProfile">
+		<property name="domainName" value="myyhd"></property>
+		<!-- 应用Context Path -->
+		<property name="serviceAppName" value="myyhd-service-server"></property>
+		<!-- 与web.xml中servlet-mapping中的url-pattern的值相同 -->
+		<property name="urlPattern" value="hedwigProvidor"></property>
+		<!-- 根据Application server 的端口修改-->
+		<property name="port" value="8080"></property>
+	</bean>
+	
+	<!-- 服务配置-->
+	<bean name="/aisinoDzfpYHDInterface" class="com.yihaodian.architecture.hedwig.provider.HedwigWebserviceExporter">
+		<property name="appProfile" ref="myyhdServiceAppContext"></property>
+		<property name="service" ref="aisinoDzfpYHDInterface" />
+		<property name="serviceInterface" value="com.aisino.hedwig.IAisinoDzfpYHDInterface" />
+		<!-- serive版本号 开发环境后缀=dev; staging环境后缀=stg; 测试环境=test，线上环境无后缀-->
+		<!-- <property name="serviceVersion" value="0.1-debug-invoice"></property> -->
+		<property name="serviceVersion" value="0.2-debug-invoice"></property>
+	</bean>
+</beans>

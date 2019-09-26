@@ -1,0 +1,284 @@
+﻿<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE sqlMap PUBLIC "-//iBATIS.com//DTD SQL Map 2.0//EN" "http://www.ibatis.com/dtd/sql-map-2.dtd">
+<sqlMap>
+
+    <select id="searchIvoiceUploadCountForPlatform" parameterClass="map" resultClass="int">
+        SELECT count(1) from fp_kj t LEFT JOIN fp_kj_log log ON t.id = log.id where log.fpsc_zt = #zt# and log.fpkj_zt =
+        '4002'
+        <dynamic>
+            <isNotEmpty property="dsptbm" prepend="and">
+                t.dsptbm = #dsptbm#
+            </isNotEmpty>
+        </dynamic>
+    </select>
+
+
+
+    <!-- 根据发票ID查询要上传的发票 -->
+    <select id="queryInvoiceInforById" parameterClass="map" resultClass="REQUEST_FPKJ">
+        SELECT
+        t.BMB_BBH,t.KPLSH,t.SKM,t.EWM,t.NSRSBH,t.NSRMC,t.NSRDZDAH, t.XHFDZ AS
+        NSRDZ,t.SWJG_DM,t.SZ_SWJG_DM,t.DKBZ,t.PYDM,t.KPXM,t.XHF_NSRSBH,t.XHFMC,t.GHF_NSRSBH,
+        t.GHFMC,t.GHF_DZ,t.GHF_GDDH AS
+        ghf_dh,t.GHF_EMAIL,t.HY_DM,t.HY_MC,t.KPY,t.SKY,t.FPZL_DM,t.FP_DM,t.FP_HM,t.YFP_DM,t.YFP_HM,DATE_FORMAT(t.KPRQ,'%Y-%m-%d
+        %T') AS KPRQ,t.GHFQYLX,t.KPHJJE,
+        PDFPATCH AS PDF_FILE,
+        t.KPLX,t.SL,t.slbz,t.BZ,t.BYZD1,t.BYZD2,t.BYZD3,t.BYZD4,t.BYZD5,t.tschbz,t.czdm as CZDM,t.GHF_SF,t.CHYY,
+        t.FHR,t.XHQD,t.HJBHSJE,t.SSYF,t.XHQDBZ,t.RETCODE,t.FWMW,t.JYM,t.SZQM,t.KPHJSE,t.FKFKHYH,t.FKFYHZH,t.XHFKHYH,
+		t.SKFYHZH,t.XHFDZ,t.XHFDH,t.SPHSL,t.ZG_SWRY_DM,t.CH_BZ,t.GHF_SJ,t.DZBZ,t.FJH,t.JQBH,t.FPQQLSH
+        FROM fp_kj t
+        WHERE t.id=#invoiceId#
+    </select>
+
+    <select id="queryInvUploadForPlatform" parameterClass="map" resultClass="FPKJXX_FPTXX">
+        SELECT t.ID
+        FROM fp_kj t INNER JOIN fp_kj_log LOG ON t.id = LOG.id 
+        WHERE (LOG.fpkj_zt = '3000' OR LOG.fpkj_zt = '2000') and LOG.fpsc_zt='2' 
+        <dynamic>
+            <isNotEmpty property="dsptbm" prepend="and">
+                t.dsptbm = #dsptbm#
+            </isNotEmpty>
+        </dynamic>
+        LIMIT #start#,#count#
+    </select>
+    <select id="selectStatusIsZero" parameterClass="map" resultClass="FPKJXX_FPTXX">
+        SELECT t.ID
+        FROM fp_kj t INNER JOIN fp_kj_log LOG ON t.id = LOG.id 
+        WHERE (LOG.fpkj_zt = '3000' OR LOG.fpkj_zt = '2000') and LOG.fpsc_zt='0'
+        <dynamic>
+            <isNotEmpty property="dsptbm" prepend="and">
+                t.dsptbm = #dsptbm#
+            </isNotEmpty>
+        </dynamic>
+        LIMIT #start#,#count#
+    </select>
+    <!-- 反补上传航信51的数据 -->
+    <select id="selectUpload51" parameterClass="map" resultClass="FPKJXX_FPTXX">
+        SELECT t.ID
+        FROM fp_kj t INNER JOIN fp_kj_log LOG ON t.id = LOG.id 
+        WHERE LOG.fpkj_zt = '3000' and LOG.fpsc_zt='4'
+        <dynamic>
+            <isNotEmpty property="dsptbm" prepend="and">
+                t.dsptbm = #dsptbm#
+            </isNotEmpty>
+        </dynamic>
+        LIMIT #start#,#count#
+    </select>
+    
+    <update id="updateById" parameterClass="map">
+        update fp_kj_log t set t.fpsc_zt ='0' WHERE id=#id#
+    </update>
+
+    <!-- 查询要删除的发票pdf -->
+    <select id="queryPdf" parameterClass="map" resultClass="REQUEST_FPKJ">
+        SELECT f.PDFPATCH PDF_FILE FROM fp_kj f LEFT JOIN fp_kj_log log ON f.ID = log.ID
+        WHERE log.FPSC_ZT='1' and log.FPKJ_ZT = #fpkj_zt#
+        LIMIT #start#,#count#
+    </select>
+
+    <!-- 查询要上传的发票明细信息 -->
+    <select id="queryKjmxForFpsc" parameterClass="string" resultClass="FP_KJMX">
+        SELECT mx.SPMC AS XMMC,mx.JLDW AS XMDW,mx.GGXH,mx.SPSL AS XMSL,mx.SPDJ AS XMDJ,
+        mx.SPJE AS XMJE,mx.XMBM,mx.BYZD1,mx.BYZD2,mx.BYZD3,mx.BYZD4,mx.BYZD5,
+        mx.SL,mx.SM,mx.HSJBZ,mx.SE,mx.FP_DM,mx.FP_HM,
+        mx.SPBM, mx.YHZCBS,	mx.LSLBS,mx.ZZSTSGL
+        FROM fp_kjmx mx
+        WHERE mx.kjid = #kjid#
+    </select>
+
+    <!-- 查询要上传的发票物流信息 -->
+    <select id="queryWlxxForFpsc" parameterClass="string" resultClass="FP_WLXX">
+        SELECT w.CYGS,w.SHDZ,w.SHSJ,w.WLDH,w.FP_DM,w.FP_HM,w.DSPTBM FROM fp_wlxx w
+        WHERE w.FP_KJID = #fp_kjid#
+    </select>
+
+    <!-- 查询要上传的发票支付信息 -->
+    <select id="queryZfxxForFpsc" parameterClass="string" resultClass="FP_ZFXX">
+        SELECT z.zffs,z.zflsh,z.zfpt,z.FP_DM,z.FP_HM,z.DSPTBM FROM fp_zfxx z
+        WHERE z.FP_KJID = #fp_kjid#
+    </select>
+
+    <select id="queryfpkjidbykplsh" parameterClass="String" resultClass="String">
+        select id from fp_kj where kplsh = #kplsh#
+    </select>
+    
+    <select id="queryPushInforById" parameterClass="String" resultClass="PushInvoiceQueueEntity">
+                SELECT
+            kj.id invoiceId,
+            kj.DSPTBM eshopCode,
+            kj.PDFPATCH pdfPath,
+            kj.NSRSBH taxpayerIdentifyNo,
+            kj.KPLSH invoiceSerialNo,
+            kj.NSRMC taxpayer,
+            kj.FPQQLSH invoiceRequestSerialNo,
+            kj.SKM fiscalCode,
+            kj.EWM twoDimensionCode,
+            kj.FPZL_DM invoiceKindCode,
+            kj.FP_DM invoiceCode,
+            kj.FP_HM invoiceNo,
+            kj.KPLX billingType,
+            kj.CZDM operatorNo,
+            kj.KPRQ billingDate,
+            dd.DDH orderNo,
+			tr.URL taxpayerUrl,
+			tr.WSFFM wsMethodName,
+			tr.JMLX encrypType
+        FROM fp_kj kj LEFT JOIN fp_kj_log lo ON lo.ID = kj.ID LEFT JOIN t_taxpayer_route tr ON kj.NSRSBH = tr.TAXPAYER_IDENTIFY_NO LEFT JOIN fp_ddxx dd ON dd.FP_KJID = kj.ID
+        WHERE kj.ID = #invoiceIds#
+    </select>
+    
+    <select id="queryPushFailedInfo" parameterClass="map"  resultClass="PushInvoiceQueueEntity">
+                      SELECT
+            kj.id invoiceId,
+            kj.DSPTBM eshopCode,
+            kj.PDFPATCH pdfPath,
+            kj.NSRSBH taxpayerIdentifyNo,
+            kj.KPLSH invoiceSerialNo,
+            kj.NSRMC taxpayer,
+            kj.FPQQLSH invoiceRequestSerialNo,
+            kj.SKM fiscalCode,
+            kj.EWM twoDimensionCode,
+            kj.FPZL_DM invoiceKindCode,
+            kj.FP_DM invoiceCode,
+            kj.FP_HM invoiceNo,
+            kj.KPLX billingType,
+            kj.CZDM operatorNo,
+            kj.KPRQ billingDate,
+            dd.DDH orderNo,
+			tr.URL taxpayerUrl,
+			tr.WSFFM wsMethodName,
+			tr.JMLX encrypType
+        FROM fp_kj kj LEFT JOIN fp_kj_log lo ON lo.ID = kj.ID LEFT JOIN t_taxpayer_route tr ON kj.NSRSBH = tr.TAXPAYER_IDENTIFY_NO LEFT JOIN fp_ddxx dd ON dd.FP_KJID = kj.ID
+        WHERE  FPKJ_ZT = #fpkj_zt# AND FPSC_ZT =#fpsc_zt#
+         LIMIT #start#,#count#
+    </select>
+    
+<!--     推送失败反补后更新发票状态为2000 -->
+    <update id="updateInvoiceStatusById" parameterClass="map">
+          UPDATE fp_kj_log SET FPKJ_ZT=#fpkj_zt# WHERE ID = #fpkj_id#
+    </update>
+    <!-- 上传航信51失败后更新发票上传状态为1,开票状态为3000 -->
+    <update id="update51StatusById" parameterClass="map">
+          UPDATE fp_kj_log SET FPSC_ZT=#fpsc_zt# WHERE ID = #fpkj_id#
+    </update>
+    
+     
+    <!-- 查询要上传的发票订单信息 -->
+    <select id="queryDdxxForFpsc" parameterClass="string" resultClass="FP_DDXX">
+        SELECT d.DDH,DATE_FORMAT(d.DDSJ,'%Y-%m-%d %T') AS DDDATE,d.DSPTBM,d.FP_KJID,d.FP_DM,d.FP_HM,d.DSPTBM FROM fp_ddxx d
+        WHERE d.FP_KJID = #fp_kjid#
+    </select>
+
+    
+    <select id="queryFpscJgList" parameterClass="Map" resultClass="String">
+        SELECT t.fpsclsh FROM fp_sclsh t where t.sz_swjg_dm = #swjg_dm# and issuccess = #issuccess#
+    </select>
+
+    <!-- 查询发票状态 -->
+	<select id="queryFpZt" parameterClass="String" resultClass="String">
+	SELECT T.FPKJ_ZT FROM fp_kj_log T 
+		WHERE T.id=#id#
+	</select>
+
+
+    <select id="queryRouteUrlById" parameterClass="String" resultClass="route">
+        SELECT url,method,swjg_dm swjgDm FROM t_route WHERE id = #id#
+    </select>
+    <!-- 根据发票代码、发票号码查询发票id @李帅-->
+    <select id="queryfpkjidBydmhm" parameterClass="map" resultClass="String">
+        select t.id from fp_kj t where t.fp_dm=#fp_dm# and t.fp_hm=#fp_hm#
+    </select>
+
+    <insert id="insertFpsclsh" parameterClass="map">
+        INSERT INTO fp_sclsh(fpsclsh,issuccess,fpscsj,sz_swjg_dm) VALUES
+        (#fpsclsh#,#issuccess#,DATE_FORMAT(#fpscsj#,'%Y-%m-%d %T'),#sz_swjg_dm#)
+    </insert>
+
+    <insert id="insertFpkj_fpsclsh" parameterClass="map">
+        INSERT INTO fpkj_fpsclsh (fpsclsh,fp_dm,fp_hm) values(#fpsclsh#,#fp_dm#,#fp_hm#)
+    </insert>
+
+    <select id="queryFpsclsh" parameterClass="String" resultClass="String">
+        SELECT t.fpsclsh FROM fp_sclsh t WHERE t.issuccess= '4000'
+    </select>
+    <select id="queryFpxxBysclsh" parameterClass="map" resultClass="string">
+        SELECT log.ID FROM fp_kj_log LOG LEFT JOIN (
+        SELECT kj.ID FROM fp_kj kj LEFT JOIN fpkj_fpsclsh lsh ON kj.fp_dm = lsh.fp_dm AND kj.fp_hm = lsh.fp_hm WHERE
+        lsh.fpsclsh = #fpsclsh#
+        ) t ON LOG.ID = t.id WHERE log.FPKJ_ZT != #fpkj_zt#
+    </select>
+    <update id="updateFpsclshzt" parameterClass="map">
+        UPDATE fp_sclsh SET issuccess=#issuccess# WHERE fpsclsh=#fpsclsh#
+    </update>
+    <select id="queryfpkjidbyfpsclsh" parameterClass="string" resultClass="string">
+        SELECT kj.id FROM fp_kj kj LEFT JOIN fpkj_fpsclsh lsh ON kj.fp_dm = lsh.fp_dm AND kj.fp_hm=lsh.fp_hm
+        WHERE lsh.fpsclsh = #fpsclsh#
+    </select>
+    <!-- 获得发票上传结果后，修改发票开具信息 @李帅 -->
+    <update id="updatefpkjjgxx" parameterClass="map">
+        UPDATE fp_kj_log SET fpkj_zt=#fpkj_zt# ,error_msg = #cwms# , error_count='0' WHERE id=#fpkj_id#
+    </update>
+    <!-- 修改发票上传状态为上传成功 @李帅 -->
+    <update id="updatefpkjsuccess" parameterClass="map">
+        UPDATE fp_kj_log SET fpkj_zt=#fpkj_zt# ,error_count='0' WHERE id = #id#
+    </update>
+    <!-- 根据id更新log发票上传51失败状态 -->
+     <update id="update_fpsclshBySclsh" parameterClass="map">
+        update fp_sclsh set issuccess = #issuccess# where fpsclsh = #fpsclsh#
+    </update>
+    <update id="updatefailforfpsc" parameterClass="map">
+        UPDATE fp_kj_log SET fpsc_zt='2' ,error_count='0' WHERE id = #id#
+    </update>
+ 
+    <update id="update_fpkjsclshBySclsh" parameterClass="map">
+        update fpkj_fpsclsh set scbz = #scbz#,sbyy = #sbyy# where fpsclsh = #fpsclsh#
+    </update>
+
+    <select id="query_fpkjsclshBySclsh" parameterClass="string" resultClass="com.aisino.domain.einvoice.model.Fp_sclsh">
+        select k.fp_dm,k.fp_hm from fpkj_fpsclsh k where k.fpsclsh = #fpsclsh#
+    </select>
+    <update id="update_fpkjlogByid" parameterClass="com.aisino.domain.einvoice.model.Fp_sclsh">
+        update fp_kj_log l set l.fpkj_zt = #fpkj_zt# , error_count='0' where l.fp_dm = #fp_dm# and
+        l.fp_hm=#fp_hm#
+    </update>
+	<update id="update_invUploadResultForPlatform" parameterClass="map">
+        update fp_kj_log platform set platform.fpsc_zt = #FPSC_ZT# ,error_count='0',send51Time=now() where platform.id = #fp_id#
+    </update>
+
+	<!-- 更新上传航信51时间 -->
+	<update id="update_invUploadResultFor51" parameterClass="map">
+        update fp_kj_log platform set platform.fpsc_zt = #FPSC_ZT# ,error_count='0',updatetime=now() where platform.id = #fp_id#
+    </update>
+
+    <update id="key_update_fpkjlsh" parameterClass="map">
+        update fpkj_fpsclsh l set l.scbz=#scbz#,l.sbyy= #sbyy# where l.fp_dm=#fp_dm# and l.fp_hm=#fp_hm# and
+        l.fpsclsh=#fpsclsh#
+    </update>
+    <select id="querySwjgByDs" resultClass="string">
+        select sz_swjg_dm from dj_dzswpt_kz where dsptbm=#dsptbm#
+    </select>
+
+
+    <!-- 修改发票冲红成功标志 -->
+    <update id="modifyFpchsq" parameterClass="map">
+        update fp_chfpsqd set RETURNCODE=#chbz#,RETURNMESSAGE=#mes# where sqlsh=#sqlsh#
+    </update>
+
+    <!-- 更新发票上传局端花费时间 -->
+    <update id="updateFpDoneLogStax" parameterClass="map">
+        update fp_donelog
+        set stax=#stax#
+        where fpkj_id=#fpkj_id#
+    </update>
+
+    <!-- 更新发票上传51花费时间 -->
+    <update id="updateFpDoneLogS51" parameterClass="map">
+        update fp_donelog
+        set s51=#s51#,
+        lasteddate = CURRENT_TIMESTAMP
+        where fpkj_id=#fpkj_id#
+    </update>
+	<select id="qeryFpscZt" parameterClass="String" resultClass="String">
+	    select fpsc_zt from fp_kj_log where id = #id#
+	</select>
+</sqlMap>

@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<interface xmlns="" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:schemaLocation="http://www.chinatax.gov.cn/tirip/dataspec/interfaces.xsd" version="DZFP1.0">
+ <globalInfo>
+  <terminalCode />
+  <appId />
+  <interfaceCode />
+  <userName />
+  <passWord />
+  <dataExchangeId />
+  <requestCode />
+  <requestTime />
+  <responseCode />
+  <fjh />
+  <jqbh />
+ </globalInfo>
+ <returnStateInfo>
+  <returnCode>0000</returnCode>
+  <returnMessage>5aSn6LGh5o6l5pS25pWw5o2u5oiQ5Yqf</returnMessage>
+ </returnStateInfo>
+ <Data>
+  <dataDescription>
+   <zipCode>0</zipCode>
+   <encryptCode />
+   <codeType />
+  </dataDescription>
+  <content />
+ </Data>
+</interface>
+

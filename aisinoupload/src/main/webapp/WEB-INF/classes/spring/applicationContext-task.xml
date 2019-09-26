@@ -1,0 +1,101 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<beans xmlns="http://www.springframework.org/schema/beans"
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xsi:schemaLocation="http://www.springframework.org/schema/beans 
+
+http://www.springframework.org/schema/beans/spring-beans-2.0.xsd">
+	<!-- 查询发票状态为2的定时器 -->
+	<bean id="platformUploadBuilder" class="org.springframework.scheduling.quartz.MethodInvokingJobDetailFactoryBean">
+		<property name="targetObject" ref="platformUploadTask" />
+		<property name="targetMethod" value="upload" />
+		<property name="concurrent" value="false" />
+	</bean>
+	<bean id="platformUploadTrigger" class="org.springframework.scheduling.quartz.CronTriggerFactoryBean">
+		<property name="jobDetail" ref="platformUploadBuilder" />
+		<property name="cronExpression" value="0/10 * * * * ?" />
+	</bean>
+	<!-- 查询发票状态为0的定时器 -->
+ 	<bean id="selectStatusBuilder" class="org.springframework.scheduling.quartz.MethodInvokingJobDetailFactoryBean">
+		<property name="targetObject" ref="selectStatusTask"/>
+		<property name="targetMethod" value="selectStatusIsZero"/>
+		<property name="concurrent" value="false"/>
+	</bean>
+	<bean id="selectStatusTrigger" class="org.springframework.scheduling.quartz.CronTriggerFactoryBean">
+		<property name="jobDetail" ref="selectStatusBuilder" />
+
+		<property name="cronExpression" value="0 0 7 * * ?" />
+
+	</bean> 
+
+	<!-- 查询发票状态3001，上传状态为1的定时器 -->
+ 	<bean id="selectPushFailedBuilder" class="org.springframework.scheduling.quartz.MethodInvokingJobDetailFactoryBean">
+		<property name="targetObject" ref="selectPushFailedTask"/>
+		<property name="targetMethod" value="selectPushFailedJob"/>
+		<property name="concurrent" value="false"/>
+	</bean>
+	<bean id="selectPushFailedTrigger" class="org.springframework.scheduling.quartz.CronTriggerFactoryBean">
+		<property name="jobDetail" ref="selectPushFailedBuilder" />
+		<property name="cronExpression" value="0/10 10 * * * ?" />
+	</bean> 
+
+	<!-- 获取上传51失败,发票上传状态为4的定时器 -->
+	<bean id="selectUpload51Builder" class="org.springframework.scheduling.quartz.MethodInvokingJobDetailFactoryBean">
+		<property name="targetObject" ref="upload51Task" />
+		<property name="targetMethod" value="selectUpload51" />
+		<property name="concurrent" value="false" />
+	</bean>
+	<bean id="taskUpload51Trigger" class="org.springframework.scheduling.quartz.CronTriggerFactoryBean">
+		<property name="jobDetail" ref="selectUpload51Builder" />
+		 <property name="cronExpression" value="0/10 * * * * ?" /> 
+	</bean>
+ 
+	<!-- 删除pdf定时器 -->
+	<bean id="taskPdfBuilder" class="org.springframework.scheduling.quartz.MethodInvokingJobDetailFactoryBean">
+		<property name="targetObject" ref="deleteFileTask" />
+		<property name="targetMethod" value="deleteFileTaskJob" />
+		<property name="concurrent" value="false" />
+	</bean>
+	<bean id="taskPdfTrigger" class="org.springframework.scheduling.quartz.CronTriggerFactoryBean">
+		<property name="jobDetail" ref="taskPdfBuilder" />
+		 <property name="cronExpression" value="0 0 0 1 * ?" /> 
+	</bean>
+
+	<!--第四步 把定义好的任务放到调度（Scheduler）工厂里面,注意这里的ref bean -->
+
+	<bean class="org.springframework.scheduling.quartz.SchedulerFactoryBean">
+		<property name="quartzProperties">
+			<props>
+				<prop key="org.quartz.scheduler.instanceName">qmsQuartzScheduler</prop>
+				<prop key="org.quartz.scheduler.instanceId">AUTO</prop>
+				<prop key="org.quartz.threadPool.threadCount">5</prop>
+			</props>
+		</property>
+		<property name="triggers">
+			<list>
+               <ref bean="platformUploadTrigger" /> 
+				<!-- 向服务平台上传发票-->
+<!--                <ref bean="selectStatusTrigger" />  -->
+               <!-- 反补上传航信51发票 -->
+<!--                <ref bean="taskUpload51Trigger" />  -->
+               <!-- 推送到京东MQ队列反补 -->
+<!--                <ref bean="selectPushFailedTrigger" />  -->
+               
+			</list>
+		</property>
+	</bean> 
+	<bean class="org.springframework.scheduling.quartz.SchedulerFactoryBean">
+		<property name="quartzProperties">
+			<props>
+				<prop key="org.quartz.scheduler.instanceName">qmsQuartzScheduler</prop>
+				<prop key="org.quartz.scheduler.instanceId">AUTO</prop>
+				<prop key="org.quartz.threadPool.threadCount">1</prop>
+			</props>
+		</property>
+		<property name="triggers">
+			<list>
+				<!-- 删除Pdf定时器 <ref bean="taskPdfTrigger"/>--> 
+			</list>
+		</property>
+	</bean>
+		
+</beans>

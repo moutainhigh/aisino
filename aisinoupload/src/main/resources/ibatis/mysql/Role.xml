@@ -1,0 +1,53 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE sqlMap PUBLIC "-//iBATIS.com//DTD SQL Map 2.0//EN" "http://www.ibatis.com/dtd/sql-map-2.dtd">
+<sqlMap>
+	<select id="getRoleById" parameterClass="int" resultClass="role">
+		select t.roleid,t.rolename,t.roletype from t_role t where t.roleid=#roleId#
+	</select>
+	
+	<insert id="insertRole" parameterClass="role">
+		insert t_role(rolename, roletype) values (#roleName#, #roleType#)
+	</insert>
+	<update id="updateRole" parameterClass="role">
+		update t_role set rolename=#roleName#, roletype=#roleType# where roleid=#roleId#
+	</update>
+	<delete id="deleteRole" parameterClass="int">
+		delete from t_role where roleid=#roleId#
+	</delete>
+	<delete id="deleteRoleMenu" parameterClass="int">
+		delete from t_role_menu where roleid=#roleId#
+	</delete>
+	
+	<sql id="queryRolesForPageCondition">
+		<dynamic>
+			<isNotEmpty prepend="and" property="roleName">
+				t.roleName like CONCAT('%',#roleName#,'%')
+			</isNotEmpty>
+		</dynamic>
+	</sql>
+	<select id="queryRolesForPage" parameterClass="map" resultClass="role">
+		select t.roleid,t.rolename,t.roletype from t_role t where 1=1
+		<include refid="queryRolesForPageCondition"/> limit #beginRow#,#pageSize#
+	</select>
+	<select id="queryRolesForPageCount" parameterClass="map" resultClass="int">
+		select count(1) as cnt from t_role t  where 1=1
+		<include refid="queryRolesForPageCondition"/>
+	</select>
+	<select id="getMenusByRoleId" parameterClass="int" resultClass="menu">
+		select distinct t.menucode, t.menuname, t.funcentry,
+		t.menulevel, t.parentcode, t.fullcode, t.nodeorder, t.isleaf,
+		t.isvisible from t_menu t inner join t_role_menu rm on
+		t.menucode=rm.menucode  where rm.roleid=#roleId# and t.isvisible='1'
+	</select>
+	<select id="getMenusAll" resultClass="menu">
+		select distinct t.menucode, t.menuname, t.funcentry,
+		t.menulevel, t.parentcode, t.fullcode, t.nodeorder, t.isleaf,
+		t.isvisible from t_menu t where t.isvisible='1'
+	</select>
+	
+	<insert id="insertRoleMenu" parameterClass="roleMenu">
+		insert into t_role_menu(roleid,menucode) values(#roleId#,#menuCode#) on duplicate key 
+		update roleid= #roleId#,menucode=#menuCode# 
+	</insert>
+	
+</sqlMap>

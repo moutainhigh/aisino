@@ -1,0 +1,48 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<beans xmlns="http://www.springframework.org/schema/beans"
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xsi:schemaLocation="http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans.xsd"
+	xmlns:p="http://www.springframework.org/schema/p">
+
+	<bean id="commonPacketService" class="com.aisino.domain.einvoice.impl.CommonPacketServiceImpl">
+
+	</bean>
+
+	<bean id="encryptionService" class="com.aisino.domain.einvoice.impl.EncryptionServiceImpl"
+		p:commonPacketService-ref="commonPacketService">
+	</bean>
+
+	<bean id="invoiceDataAccessManagerService"
+		class="com.aisino.domain.einvoice.impl.InvoiceDataAccessManagerServiceImpl"
+		p:repository-ref="eInvoiceRepositoryMyBatis">
+	</bean>
+
+	<bean id="invoicePDFProducerService"
+		class="com.aisino.domain.einvoice.impl.InvoicePDFProducerServiceImpl"
+		p:commonPacketService-ref="commonPacketService" p:textDao-ref="eInvoiceRepositoryMyBatis">
+	</bean>
+
+    <!-- 发票获取id读取本地数据库 -->
+	
+	
+	<bean id="uniqueResourceManagerService"
+		class="com.aisino.domain.einvoice.impl.UniqueResourceManagerServiceImpl"
+		p:eInvoiceRepository-ref="eInvoiceRepositoryMyBatis">
+	</bean> 
+	
+	
+	<!-- 发票获取id读取zookeeper -->
+	<!-- 
+	
+	 -->
+	 <!-- 
+	<bean id="uniqueResourceManagerService" 
+		  class="com.aisino.domain.einvoice.impl.UniqueResourceManagerServiceZKImpl" 
+		p:eInvoiceRepository-ref="eInvoiceRepositoryMyBatis"
+		p:nsrJCLockGrp="${zookeeper.fpjc.lock}"
+		p:uniqueIdLockGrpPrefix="${zookeeper.id.lock.prefix}"
+		p:zookeeperConnectionString="${zookeeper.cluster.ip}">
+	</bean> 
+	-->
+
+</beans>

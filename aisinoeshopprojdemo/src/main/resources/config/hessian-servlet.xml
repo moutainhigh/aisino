@@ -1,0 +1,26 @@
+<beans xmlns = "http://www.springframework.org/schema/beans"
+       xmlns:xsi = "http://www.w3.org/2001/XMLSchema-instance"
+       xmlns:aop = "http://www.springframework.org/schema/aop"
+       xmlns:tx = "http://www.springframework.org/schema/tx"
+       xsi:schemaLocation = "http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans-2.0.xsd
+           http://www.springframework.org/schema/aop http://www.springframework.org/schema/aop/spring-aop-2.0.xsd
+           http://www.springframework.org/schema/tx http://www.springframework.org/schema/tx/spring-tx-2.0.xsd" >    
+          
+    <!-- 定义普通的bean实例 -->
+  	<bean id="HessianImpl" class="com.aisino.hessian.service.impl.HessianServiceImpl"/>
+    <!--  使用HessianServiceExporter 将普通bean导出成Hessian服务-->
+    <bean name="/hessian" class="org.springframework.remoting.caucho.HessianServiceExporter">
+    <!--  需要导出的目标bean-->
+     <property name="service" ref="HessianImpl"/>
+       <!--  Hessian服务的接口-->
+     <property name="serviceInterface" value="com.aisino.hessian.service.IHessianService"/>
+    </bean>
+    
+    <!--hessian-->
+	<bean id="HessianBean" class="org.springframework.remoting.caucho.HessianProxyFactoryBean">  
+	    <property name="serviceUrl" value="http://127.0.0.1:8083/zzseshop/hessian"></property>  
+	    <property name="serviceInterface" value="com.aisino.hessian.service.IHessianService"></property>  
+	</bean>
+    
+</beans>
+

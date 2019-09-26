@@ -1,0 +1,67 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<beans xmlns="http://www.springframework.org/schema/beans"
+       xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+       xmlns:tx="http://www.springframework.org/schema/tx"
+       xmlns:context="http://www.springframework.org/schema/context"
+       xsi:schemaLocation="http://www.springframework.org/schema/beans
+							http://www.springframework.org/schema/beans/spring-beans.xsd
+							http://www.springframework.org/schema/tx
+							http://www.springframework.org/schema/tx/spring-tx.xsd
+						 	 http://www.springframework.org/schema/context http://www.springframework.org/schema/context/spring-context.xsd"
+       xmlns:p="http://www.springframework.org/schema/p">
+
+    <context:property-placeholder location="classpath*:general.properties"/>
+    <context:annotation-config/>
+    <tx:annotation-driven/>
+    <context:component-scan base-package="com.aisino"/>
+
+    <bean id="dataSource"
+          class="com.alibaba.druid.pool.DruidDataSource"
+          destroy-method="close" init-method="init" p:driverClassName="${spring.datasource.driverClassName}"
+          p:url="${spring.datasource.url}"
+          p:connectionProperties="druid.stat.slowSqlMillis=5000;druid.stat.logSlowSql=true"
+          p:username="${spring.datasource.username}" p:removeAbandoned="true" p:removeAbandonedTimeout="3600"
+          p:logAbandoned="true"
+          p:password="${spring.datasource.password}" p:minIdle="1"
+          p:maxActive="10" p:poolPreparedStatements="true" p:maxPoolPreparedStatementPerConnectionSize="20"
+          p:initialSize="1" p:maxWait="60000" p:timeBetweenEvictionRunsMillis="60000" p:filters="stat,slf4j">
+        <description>开发环境配置</description>
+    </bean>
+
+    <bean id="transactionManager" class="org.springframework.jdbc.datasource.DataSourceTransactionManager"
+          p:dataSource-ref="dataSource"/>
+
+    <bean id="sqlSessionFactory" class="org.mybatis.spring.SqlSessionFactoryBean"
+          p:dataSource-ref="dataSource" p:configLocation="/META-INF/mybatisconfig.xml"/>
+
+    <bean id="sqlSessionTemplate" class="org.mybatis.spring.SqlSessionTemplate">
+        <constructor-arg index="0" ref="sqlSessionFactory"/>
+    </bean>
+
+
+    <bean id="repositoryMyBatis" class="com.aisino.domain.einvoice.repository.mybatis.EInvoiceRepositoryMyBatis"
+          p:template-ref="sqlSessionTemplate">
+    </bean>
+
+
+    <bean id="commonPacketService" class="com.aisino.domain.einvoice.impl.CommonPacketServiceImpl">
+
+    </bean>
+
+    <bean id="encryptionService"
+          class="com.aisino.domain.einvoice.impl.EncryptionServiceImpl"
+          p:commonPacketService-ref="commonPacketService">
+    </bean>
+
+    <bean id="invoiceDataAccessManagerService"
+          class="com.aisino.domain.einvoice.impl.InvoiceDataAccessManagerServiceImpl"
+          p:repository-ref="repositoryMyBatis">
+    </bean>
+
+    <bean id="invoicePDFProducerService"
+          class="com.aisino.domain.einvoice.impl.InvoicePDFProducerServiceImpl"
+          p:commonPacketService-ref="commonPacketService"
+          p:textDao-ref="repositoryMyBatis">
+    </bean>
+
+</beans>

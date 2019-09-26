@@ -1,0 +1,92 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE sqlMap PUBLIC "-//iBATIS.com//DTD SQL Map 2.0//EN" "http://www.ibatis.com/dtd/sql-map-2.dtd">
+<sqlMap>
+	<select id="getUserByAccount" parameterClass="string"
+		resultClass="user">
+		select t.userid, t.useraccount, t.username, t.password,
+		t.isvalid, t.regtime, t.lastlogintime, t.logins,t.usertype,t.nsrsbh,ur.ROLEID from t_user t inner join t_user_role ur on ur.USERID = t.USERID
+		where t.useraccount=#value#
+	</select>
+	
+	<select id="getSaveUserByAccount" parameterClass="string"
+		resultClass="user">
+		select t.userid, t.useraccount, t.username, t.password,
+		t.isvalid, t.regtime, t.lastlogintime, t.logins,t.usertype,t.nsrsbh from t_user t 
+		where t.useraccount=#value#
+	</select>
+	<select id="getUserById" parameterClass="int" resultClass="user">
+		select t.userid, t.useraccount, t.username, t.password,
+		t.isvalid, t.regtime, t.lastlogintime, t.logins,t.userType,t.nsrsbh from t_user t
+		where t.userid=#value# and t.isvalid='Y'
+	</select>
+	
+	<insert id="insertUser" parameterClass="user">
+		insert t_user(useraccount, username, password,
+		isvalid,regtime,userType,nsrsbh) values (#userAccount#, #userName#, #password#,
+		'Y',#regTime#,#userType#,#nsrsbh#)
+	</insert>
+	<update id="updateUser" parameterClass="user">
+		update t_user set useraccount=#userAccount#, username=#userName#, password=#password#,userType=#userType#,nsrsbh=#nsrsbh# where userid=#userId#
+	</update>
+	<update id="disableUser" parameterClass="int">
+		update t_user set isvalid='N' where userid=#userId#
+	</update>
+	<update id="loginUser" parameterClass="user">
+		update t_user set lastlogintime=#lastLoginTime#,logins=logins+1 where userid=#userId#
+	</update>
+	
+	<select id="getRolesByUserId" parameterClass="int" resultClass="role">
+		select t.roleid,t.rolename,t.roletype from t_role t  inner join t_user_role ur on t.roleid=ur.roleid and ur.userid=#value#
+	</select>
+	<select id="getUnholdRolesByUserId" parameterClass="int" resultClass="role">
+		select t.roleid,t.rolename,t.roletype from t_role t  where not exists (select 1 from  t_user_role ur where t.roleid=ur.roleid and ur.userid=#value#)
+	</select>
+	
+	<select id="getMenusByUserId" parameterClass="int"
+		resultClass="menu">
+		select distinct t.menucode, t.menuname, t.funcentry,
+		t.menulevel, t.parentcode, t.fullcode, t.nodeorder, t.isleaf,
+		t.isvisible from t_menu t inner join t_role_menu rm on
+		t.menucode=rm.menucode inner join t_user_role r on
+		r.roleid=rm.roleid where r.userid=#value# and t.isvisible='1'
+	</select>
+	<sql id="queryUsersForPageCondition">
+		<dynamic>
+			<isNotEmpty prepend="and" property="userName">
+				t.userName like CONCAT('%',#userName#,'%')
+			</isNotEmpty>
+		</dynamic>
+	</sql>
+	<select id="queryUsersForPage" parameterClass="map" resultClass="user">
+		select min(t.userid) as userid, min(t.useraccount) as useraccount, min(t.password) as password,min(t.username) as password,min(t.username) as username, 
+		min(t.isvalid) as isvalid, min(t.regtime) as regtime, min(t.lastlogintime) as lastlogintime, min(t.logins) as logins,min(t.usertype) as usertype,min(rt.roleid) as roleid 
+		from t_user t left join t_user_role rt on t.userid=rt.userid 
+		where t.isvalid='Y' 
+		<include refid="queryUsersForPageCondition"/> 
+		group by t.username ,t.useraccount
+		limit #beginRow#,#pageSize#
+	</select>
+	<select id="queryUsersForPageCount" parameterClass="map" resultClass="int">
+			select count(tt.userid) as cnt from  
+			( select min(t.userid) as userid, min(t.useraccount) as useraccount, min(t.username) as password,min(t.username) as username, 
+				min(t.isvalid) as isvalid, min(t.regtime) as regtime, min(t.lastlogintime) as lastlogintime, min(t.logins) as logins,min(t.usertype) as usertype,min(rt.roleid) as roleid 
+				from t_user t left join t_user_role rt on t.userid=rt.userid 
+				where t.isvalid='Y' 
+				<include refid="queryUsersForPageCondition"/> 
+				group by t.username ,t.useraccount
+			) tt
+	</select>
+	
+	<!-- 查询系统路由信息 -->
+	<select id="queryRouteList" resultClass="route">
+		select ID, url, swjg_dm swjgDm, yxbz, qqfs, method, username, pwd, swjg_mc swjgMc from t_route t where t.yxbz = '0' 
+		<dynamic>
+			<isEqual prepend="and" compareValue="1" property="userType">
+				t.swjg_dm in (select dj.sz_swjg_dm from dj_nsrxx dj where dj.nsrsbh = #nsrsbh#)
+			</isEqual>
+		</dynamic>
+	</select>
+	<select id="getNsrxxCountByNsrsbh" resultClass="int" parameterClass="string">
+		select count(NSRDZDAH) cn from dj_nsrxx where nsrsbh=#nsrsbh#
+	</select>
+</sqlMap>

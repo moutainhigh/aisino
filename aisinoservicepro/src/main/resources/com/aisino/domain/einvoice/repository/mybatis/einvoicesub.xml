@@ -1,0 +1,573 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.aisino.domain.einvoice.sub">
+
+    <!-- 插入发票开具信息到数据库中 -->
+    <insert id="insertInvoice">
+
+          INSERT INTO fp_kj
+        (
+            ID,
+            FPQQLSH,
+            DSPTBM,
+            NSRSBH,
+            NSRMC,
+            NSRDZDAH,
+            DKBZ,
+            PYDM,
+            KPXM,
+            XHF_NSRSBH,
+            XHFMC,GHFMC,
+            GHF_NSRSBH,
+            GHF_DZ,
+            GHF_GDDH,
+            GHF_SJ,
+            GHF_EMAIL,
+            HY_DM,
+            HY_MC,
+            KPY,
+            SKY,
+            KPLX,
+            YFP_DM,
+            YFP_HM,
+            CHYY,
+            KPHJJE,
+            BZ,
+            SZ_SWJG_DM,
+            FKDW,
+            FKF_DM,
+            SKF_DM,
+            SPHSL,
+            XHFSBH,
+            CJSJ,
+            XGSJ,
+            SWJG_DM,
+            GHFQYLX,
+            CZDM,
+     	FHR,
+		#XHQD,
+		HJBHSJE,
+		#SSYF,
+		#XHQDBZ,
+		#RETCODE,
+		#FWMW,
+		#JYM,
+		#SZQM,
+		KPHJSE,
+		#FKFKHYH,
+		FKFYHZH,
+		#XHFKHYH,
+		SKFYHZH,
+		XHFDZ,
+		BMB_BBH,
+		XHFDH
+            <if test="billingType==1">
+                ,SYKCHJE
+            </if>
+        
+        )
+        VALUES(
+            #{id},
+            #{invoiceRequestSerialNo},
+            #{eshopCode},
+            #{taxpayerIdentifyNo},
+            #{taxpayer},
+            #{taxpayerEDNo},
+            #{agentInvoiceFlag},
+            #{sampleInvoiceCode},
+            #{billingItem},
+            #{sellerTaxpayerIdentifyNo},
+            #{sellerName},
+            #{buyerName},
+            #{buyerTaxpayerIdentifyNo},
+            #{buyerAddress},
+            #{buyerFixedPhone},
+            #{buyerMobile},
+            #{buyerEmail},
+            #{industryCode},
+            #{industryName},
+            #{billingStaff},
+            #{cashier},
+            #{billingType},
+            #{oldInvoiceCode},
+            #{oldInvoiceNo},
+            #{redInvoiceReason},
+            #{billingAmount},
+            #{memo},
+            #{taxAuthorityCode},
+            #{buyerName},
+            #{buyerTaxpayerIdentifyNo},
+            #{taxpayerIdentifyNo},
+            #{itemCount},
+            #{sellerTaxpayerIdentifyNo},
+            now(),
+            now(),
+            (SELECT SWJG_DM FROM dj_nsrxx where nsrsbh = #{taxpayerIdentifyNo}),
+            #{buyerEnterpriseTypeCode},
+            #{operatorNo},
+			 #{infoChecker},
+			 #{infoAmount},
+			 #{infoTaxAmount},
+		
+			 #{infoClientBankAccount},
+		
+			 #{infoSellerBankAccount},
+			 #{infoSellerAddress},
+			 #{infoSellerVersion},
+			 #{infoSellerPhone}
+            <if test="billingType==1">
+                ,#{remainingRedAmount}
+            </if>
+            
+        )
+    </insert>
+
+    <!-- 红字发票开具冲红申请插入到数据库中 -->
+    <insert id="insertInvoiceRed">
+		INSERT INTO fp_chfpsqd
+		(
+		    ID,
+            KJID,
+            DSPTBM,
+            NSRDZDAH,
+            NSRSBH,
+            FP_DM,
+            FP_HM,
+            KPLX,
+            CHJE,
+            CHYY,
+            SPFDH,
+            SPFYX,
+            SQLSH,
+            CZDM,
+            RETURNCODE
+		)
+		VALUES
+		(
+		    #{id},
+            #{invoiceId},
+            #{eshopCode},
+            #{taxpayerEDNo},
+            #{taxpayerIdentifyNo},
+            #{invoiceCode},
+            #{invoiceNo},
+            #{billingType},
+            #{redAmount},
+            #{redInvoiceReason},
+            #{recipientPhone},
+            #{recipientEmail},
+            #{applySerialNo},
+            #{operatorNo},
+            '1000'
+		)
+	</insert>
+
+    <insert id="insertInvoiceOrderDetail">
+		INSERT INTO fp_ddmxxx
+		(
+		    ID,
+		    KJID,
+		    DDH,
+		    SPHXH,
+		    SPMC,
+		    JLDW,
+		    GGXH,
+		    SPSL,
+		    SPDJ,
+		    SPJE
+		)
+		VALUES
+		(
+		    #{id},
+		    #{invoiceId},
+		    #{orderNo},
+		    #{itemIndex},
+		    #{itemName},
+		    #{unitName},
+		    #{specificationModel},
+		    #{itemCount},
+		    #{itemUnitCost},
+		    #{itemAmount}
+		)
+	</insert>
+
+    <insert id="insertInvoiceLogistics">
+		INSERT INTO fp_wlxx
+		(
+		    ID,
+		    DSPTBM,
+		    fp_kjID,
+		    CYGS,
+		    WLDH,
+		    SHDZ,
+		    SHSJ
+		)
+		VALUES
+		(
+			#{id},
+		    #{eshopCode},
+		    #{invoiceId},
+		    #{logisticsCompany},
+		    #{logisticsNo},
+		    #{deliveryAddress},
+		    #{deliveryTime}
+		)
+	</insert>
+
+    <!--getTaxpayer -->
+    <select id="getInvoiceTaxpayer" resultType="TaxpayerEntityInfo">
+      	 SELECT
+			nsrsbh taxpayerIdentifyNo,
+			nsrdzdah taxpayerEDNo,
+			nsrmc taxpayer,
+			hy_dm industryCode,
+			hy_mc industryName,
+			nsrzt_dm taxpayerStatusCode,
+			djzclx_dm registerTypeCode,
+			zgswry_dm taxChargePersonCode,
+			fddbrmc legalName,
+			bsrmc taxBusinessPerson,
+			swdjblx_dm taxRegisterTableTypeCode,
+			swjg_dm taxOfficeRegCode,
+			scjydz businessAddress,
+			dsptbm eshopCode,
+			sz_swjg_dm taxAuthorityCode
+		 FROM dj_nsrxx
+		 WHERE nsrsbh = #{taxpayerIdentifyNo}
+    </select>
+
+    <select id="getInvoiceTaxpayerAlias" resultType="TaxpayerEntityInfo">
+         SELECT
+                t.NSRSBH taxpayerIdentifyNo,
+                t.NSRDZDAH taxpayerEDNo,
+                t.NSRMC taxpayer,
+                t.HY_DM industryCode,
+                t.HY_MC industryName,
+                t.NSRZT_DM taxpayerStatusCode,
+                t.DJZCLX_DM registerTypeCode,
+                t.ZGSWRY_DM taxChargePersonCode,
+                t.FDDBRMC legalName,
+                t.BSRMC taxBusinessPerson,
+                t.SWDJBLX_DM taxRegisterTableTypeCode,
+                t.SWJG_DM taxOfficeRegCode,
+                t.SCJYDZ businessAddress,
+                p.PLATFORM_CODE eshopCode,
+                t.SZ_SWJG_DM taxAuthorityCode,
+                KPZT taxpayerInvoiceStatus,
+                p.AVAILABLE  eshopEnabled
+                FROM dj_nsrxx t
+                INNER JOIN dj_dzswpt p ON p.DSPTBM=t.DSPTBM
+        		WHERE t.nsrsbh = #{taxpayerIdentifyNo} AND  p.DSPTBM = #{platformCode}
+    </select>
+
+    <select id="getCountTaxpayerStatus"  resultType="Integer">
+       SELECT COUNT(1)
+       FROM fp_nsrzt
+       WHERE SWJG_DM = (SELECT SZ_SWJG_DM FROM dj_nsrxx WHERE NSRSBH = #{taxpayerIdentifyNo})
+              AND NSRZT_DM = #{taxpayerStatusCode}
+    </select>
+
+    <select id="getCountInvoiceLog" resultType="Integer">
+       SELECT COUNT(1)
+       FROM fp_kj_log
+       WHERE id = #{invoiceId}
+    </select>
+
+    <select id="getCountInvoiceBlue" resultType="Integer">
+      SELECT COUNT(1)
+      FROM fp_kj t
+	  WHERE t.FP_DM = #{oldInvoiceCode}
+	         AND t.FP_HM = #{oldInvoiceNo}
+	         AND KPLX = '1'
+    </select>
+
+
+    <select id="getInvoicePdfInfo" resultType="InvoicePDFInfo">
+    	SELECT
+        T.DSPTBM eshopCode ,
+		T.NSRSBH taxpayerIdentifyNo,
+		T.KPLSH invoiceSerialNo,
+		T.NSRMC taxpayer,
+		T.FPQQLSH invoiceRequestSerialNo,
+		T.SKM  fiscalCode,
+		T.EWM twoDimensionCode,
+		T.FPZL_DM invoiceKindCode,
+		T.FP_DM invoiceCode,
+		T.FP_HM invoiceNo,
+		T.KPLX billingType,
+		T.PDFPATCH pdfPath,
+		DATE_FORMAT(T.KPRQ,'%Y-%m-%d %H:%i:%s') billingDate,
+		(SELECT D.DDH FROM fp_ddxx D WHERE T.ID = D.FP_KJID)AS orderNo,
+    	CZDM  operatorNo
+		FROM fp_kj T LEFT
+		JOIN fp_kj_log LOG ON T.ID = LOG.ID WHERE (LOG.FPKJ_ZT >= '3000' OR  LOG.FPKJ_ZT = '2000' )
+    	AND FPQQLSH = #{invoiceRequestSerialNo}  AND T.dsptbm= #{eshopCode}  AND T.NSRSBH = #{taxpayerIdentifyNo}
+    </select>
+
+    <select id="findInvoiceKindInfo" resultType="InvoiceKindInfo">
+        SELECT
+            T.ID id,
+            T.NSRSBH taxpayerIdentifyNo,
+            T.NSRDZDAH taxpayerEDNo,
+            T.FPZL_DM invoiceKindCode,
+            T.FPZL_MC invoiceKind,
+            T.MYGPZGSL purchaseInvoiceLimited,
+            T.MYZGCPL holdInvoiceLimited,
+            T.KPZGXE  invoiceLimited
+            FROM fp_pz T
+            WHERE	T.NSRSBH = #{taxpayerIdentifyNo}
+    </select>
+
+    <select id="getInvoicePdfPath" resultType="String">
+     	SELECT t.pdfpatch  FROM fp_kj t  WHERE t.skm=#{fiscalCode}
+    </select>
+    
+    <insert id="insertInvoiceLog">
+        INSERT INTO fp_kj_log
+        (
+          LOG_ID,
+          id,
+          fpkj_zt,
+		  error_msg,
+		  nsrsbh,
+		  jylsh,
+		  kpfsbh,
+		  kpfmc,
+		  fkfmc,
+		  error_count,
+		  sendphone_zt,
+		  sendmail_zt,
+		  sfcl,
+		  updatetime
+		)
+		VALUES
+		(
+		  #{id},
+		  #{invoiceId},
+		  #{invoiceStatus},
+		  #{errorMsg},
+		  #{taxpayerIdentifyNo},
+		  #{transactionSerialNo},
+		  #{invoiceIdentifyNo},
+		  #{taxpayer},
+		  #{payName},
+		  '0',
+		  '0',
+		  '0',
+		  '0',
+		  now()
+		)
+    </insert>
+
+    <update id="updateInvoiceLog">
+        UPDATE fp_kj_log
+        SET fpkj_zt = #{invoiceStatus},
+            updatetime = now()
+            <if test="errorMsg!=null">
+                ,error_msg = #{errorMsg}
+            </if>
+        WHERE ID = #{invoiceId}
+    </update>
+
+    <insert id="insertInvoiceDetail">
+       INSERT INTO fp_kjmx
+		(
+		  ID,
+		  KJID,
+		  SPHXH,
+		  SPMC,
+		  JLDW,
+		  GGXH,
+		  SPSL,
+		  SPDJ,
+		  SPJE,
+		  XMBM,
+			SL,
+			#SM,
+			SE,
+			HSJBZ,
+			FPHXZ,
+			SPBM,
+			ZXBM,
+			YHZCBS,
+			LSLBS,
+			ZZSTSGL
+			<if test="deductions != null and deductions != '' ">
+				,KCE
+			</if>
+			
+		)
+		VALUES(
+		  #{id},
+		  #{invoiceId},
+		  #{itemIndex},
+		  #{itemName},
+		 	#{listUnit},
+		  #{specificationModel},
+		  #{itemCount},
+		  #{itemUnitCost},
+		  #{itemAmount},
+		  #{itemCode},
+			#{infoTaxRate},
+		
+			#{listTaxAmount},
+			'0',
+			#{invoiceLineProperty},
+			#{goodsCode},
+			#{selfCoding},
+			#{preferentialMarking},
+			#{zeroTariff},
+			#{specialManagement}
+			<if test="deductions != null and deductions != '' ">
+				,#{deductions}
+			</if>
+			
+	
+		)
+    </insert>
+
+    <insert id="insertInvoiceOrder">
+        INSERT INTO fp_ddxx
+		(
+		  ID,
+		  DSPTBM,
+		  fp_kjID,
+		  DDH,
+		  DDSJ,
+		  THDH
+		)
+		VALUES
+		(
+		  #{id},
+		  #{eshopCode},
+		  #{invoiceId},
+		  #{orderNo},
+		  #{orderDate},
+		  #{returnOrderNo}
+		)
+    </insert>
+
+    <select id="getSignCAIdByTaxpayerIdentifyNo" resultType="String">
+         SELECT QZID
+         FROM fp_qzcx
+         WHERE NSRSBH = #{taxpayerIdentifyNo}
+    </select>
+
+    <insert id="insertInvoicePayment">
+		INSERT INTO fp_zfxx
+		(
+		   ID,
+		   DSPTBM,
+		   fp_kjID,
+		   ZFFS,
+		   ZFPT,
+		   ZFLSH
+		)
+		VALUES
+		(
+		  #{id},
+		  #{eshopCode},
+		  #{invoiceId},
+		  #{paymentWay},
+		  #{paymentPlatform},
+		  #{paymentSerialNo}
+		)
+	</insert>
+
+    <select id="getCountInvoiceRedBlue" resultType="Integer">
+		SELECT COUNT(1)
+		FROM fp_kj
+		WHERE NSRSBH = #{taxpayerIdentifyNo}
+            AND FP_DM = #{oldInvoiceCode}
+            AND FP_HM = #{oldInvoiceNo}
+            AND KPLX = #{billingType}
+	</select>
+
+    <select id="getInvoiceAmountInfo" resultType="InvoiceHeaderEntityInfo">
+        SELECT
+          t.ID id,
+          t.FPQQLSH invoiceRequestSerialNo,
+          t.DSPTBM eshopCode,
+          t.NSRSBH taxpayerIdentifyNo,
+          t.NSRMC taxpayer,
+          t.NSRDZDAH taxpayerEDNo,
+          t.SWJG_DM taxOfficeRegCode,
+          t.DKBZ agentInvoiceFlag,
+          t.PYDM sampleInvoiceCode,
+          t.KPXM billingItem,
+          t.XHF_NSRSBH sellerTaxpayerIdentifyNo,
+          t.XHFMC sellerName,
+          t.GHFMC buyerName,
+          t.GHF_NSRSBH buyerTaxpayerIdentifyNo,
+          t.GHF_DZ buyerAddress,
+          t.GHF_GDDH buyerFixedPhone,
+          t.GHF_SJ buyerMobile,
+          t.GHF_EMAIL buyerEmail,
+          t.HY_DM industryCode,
+          t.HY_MC industryName,
+          t.KPY billingStaff,
+          t.SKY cashier,
+          t.KPRQ billingDate,
+          t.KPLX billingType,
+          t.YFP_DM oldInvoiceCode,
+          t.YFP_HM oldInvoiceNo,
+          t.CHYY redInvoiceReason,
+          t.KPHJJE billingAmount,
+          t.BZ memo,
+          t.BYZD1 standbyFieldOne,
+          t.BYZD2 standbyFieldTwo,
+          t.BYZD3 standbyFieldThree,
+          t.BYZD4 standbyFieldFour,
+          t.BYZD5 standbyFieldFive,
+          t.TSCHBZ specRedInvoiceFlag,
+          dd.DDH orderNo,
+          t.KPLSH invoiceSerialNo,
+          t.SKM AS fiscalCode,
+          t.EWM twoDimensionCode,
+          t.FPZL_DM invoiceKindCode,
+          t.FP_DM invoiceCode,
+          t.FP_HM invoiceNo,
+          t.PDFPATCH AS pdfPath,
+          t.SZ_SWJG_DM taxAuthorityCode,
+          t.SPHSL itemCount,
+          t.KPXM AS billingItem,
+          l.ERROR_COUNT AS operateCount,
+          t.GHFQYLX buyerEnterpriseTypeCode,
+          t.CZDM operatorNo,
+          t.SYKCHJE remainingRedAmount,
+          qz.qzid signatureId,
+          l.FPKJ_ZT invoiceStatus
+          FROM fp_kj t LEFT JOIN fp_kj_log l ON t.id = l.id LEFT JOIN fp_qzcx qz on qz.nsrsbh = t.NSRSBH LEFT JOIN fp_ddxx dd on t.ID = dd.FP_KJID
+          WHERE t.FP_DM = #{oldInvoiceCode} AND t.FP_HM = #{oldInvoiceNo} AND t.NSRSBH = #{taxpayerIdentifyNo} AND t.KPLX = #{billingType}
+    </select>
+    
+    <!-- 用于开具红票时查询剩余可冲红金额、特殊冲红标志、开票合计金额 -->
+    <select id="getInvoiceAmountInfoForRed" resultType="InvoiceHeaderEntityInfo">
+        SELECT t.SYKCHJE remainingRedAmount,t.TSCHBZ specRedInvoiceFlag,t.KPHJJE billingAmount,t.HJBHSJE infoAmount
+		FROM fp_kj t
+		WHERE t.FP_DM = #{oldInvoiceCode} AND t.FP_HM = #{oldInvoiceNo} AND t.NSRSBH = #{taxpayerIdentifyNo} AND KPLX = #{billingType}
+    </select>
+
+    <!-- 通过纳税人识别号查询纳税人信息 -->
+    <select id="queryTaxpayerInfoByTaxpayerIdentifyNo" resultType="TaxpayerEntityInfo">
+	    SELECT
+			nsrsbh taxpayerIdentifyNo,
+			nsrdzdah taxpayerEDNo,
+			nsrmc taxpayer,
+			hy_dm industryCode,
+			hy_mc industryName,
+			nsrzt_dm taxpayerStatusCode,
+			djzclx_dm registerTypeCode,
+			zgswry_dm taxChargePersonCode,
+			fddbrmc legalName,
+			bsrmc taxBusinessPerson,
+			swdjblx_dm taxRegisterTableTypeCode,
+			swjg_dm taxOfficeRegCode,
+			scjydz businessAddress,
+			dsptbm eshopCode,
+			sz_swjg_dm taxAuthorityCode
+	    FROM dj_nsrxx
+	    WHERE nsrsbh = #{taxpayerIdentifyNo}
+	</select>
+</mapper>

@@ -1,0 +1,75 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<web-app xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xmlns="http://java.sun.com/xml/ns/javaee" xmlns:web="http://java.sun.com/xml/ns/javaee/web-app_2_5.xsd"
+	xsi:schemaLocation="http://java.sun.com/xml/ns/javaee http://java.sun.com/xml/ns/javaee/web-app_2_5.xsd"
+	version="2.5">
+	
+	<context-param>
+		<param-name>contextConfigLocation</param-name>
+		<param-value>
+			classpath:spring/spring-context.xml
+    </param-value>
+	</context-param>
+	<context-param>
+		<param-name>webAppRootKey</param-name>
+		<param-value>zzs_jdTrans.root</param-value>
+	</context-param>
+	
+	<listener>
+		<listener-class>org.springframework.web.context.ContextLoaderListener</listener-class>
+	</listener>
+	<listener>
+		<listener-class>org.springframework.web.util.IntrospectorCleanupListener</listener-class>
+	</listener>
+	
+	<servlet>
+		<servlet-name>viewServlet</servlet-name>
+		<servlet-class>com.aisino.servlet.LoadServlet</servlet-class>
+	</servlet>
+	<servlet-mapping>
+		<servlet-name>viewServlet</servlet-name>
+		<url-pattern>/viewServlet</url-pattern>
+	</servlet-mapping>
+	
+	<servlet>  
+        <servlet-name>CXFServlet</servlet-name>  
+        <servlet-class>org.apache.cxf.transport.servlet.CXFServlet</servlet-class>  
+         <load-on-startup>1</load-on-startup>  
+    </servlet>  
+	<servlet-mapping>
+		<servlet-name>CXFServlet</servlet-name>
+		<url-pattern>/webservice/*</url-pattern>
+	</servlet-mapping>
+	
+	<!-- hedwig配置 -->
+	<!--  
+	<servlet>
+		<servlet-name>hedwigServlet</servlet-name>
+		<servlet-class>org.springframework.web.servlet.DispatcherServlet</servlet-class>
+		<init-param>
+			<param-name>contextConfigLocation</param-name>
+			<param-value>
+				classpath:spring/applicationContext-remote-YHD.xml
+			</param-value>
+		</init-param>
+		<load-on-startup>1</load-on-startup>
+	</servlet>
+	<servlet-mapping>
+		<servlet-name>hedwigServlet</servlet-name>
+		<url-pattern>/hedwigProvidor/*</url-pattern>
+	</servlet-mapping>
+	-->
+	
+	<servlet>
+		<servlet-name>DownloadTheInvoice</servlet-name>
+		<servlet-class>com.aisino.servlet.DownloadTheInvoice</servlet-class>
+	</servlet>
+	<servlet-mapping>
+		<servlet-name>DownloadTheInvoice</servlet-name>
+		<url-pattern>/fpxz</url-pattern>
+	</servlet-mapping>
+	
+	<welcome-file-list>
+		<welcome-file>index.jsp</welcome-file>
+	</welcome-file-list>
+</web-app>
